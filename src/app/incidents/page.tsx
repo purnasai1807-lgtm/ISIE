@@ -41,6 +41,7 @@ export default function IncidentsPage() {
   const { user, isDemoMode } = useAuth();
   const [incidents, setIncidents] = useState<IntelligenceEvent[]>([]);
   const [selectedIncident, setSelectedIncident] = useState<IntelligenceEvent | null>(null);
+  const [incidentLoadError, setIncidentLoadError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterSeverity, setFilterSeverity] = useState<string>("ALL");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -61,10 +62,12 @@ export default function IncidentsPage() {
   // Map preview thumbnail toggle state
   const [showMapPreview, setShowMapPreview] = useState(false);
 
-  // Subscribe to real-time incidents
+  // The demo feed is browser-local; operational records are read-only and provenance-gated.
   useEffect(() => {
+    setIncidentLoadError(null);
     const unsubscribe = incidentService.subscribeIncidents(isDemoMode, (data) => {
       setIncidents(data);
+      setIncidentLoadError(null);
       // Auto-select or preserve currently selected incident
       setSelectedIncident((prev) => {
         if (!prev && data.length > 0) return data[0];
@@ -74,6 +77,10 @@ export default function IncidentsPage() {
         }
         return null;
       });
+    }, (error) => {
+      setIncidents([]);
+      setSelectedIncident(null);
+      setIncidentLoadError(error.message || "Incident records could not be loaded.");
     });
 
     return () => {
@@ -81,8 +88,8 @@ export default function IncidentsPage() {
     };
   }, [isDemoMode]);
 
-  const canCreate = user && !isDemoMode && hasPermission(user.role, "canCreateIncident");
-  const canUpdate = user && !isDemoMode && hasPermission(user.role, "canUpdateIncident");
+  const canCreate = user && (isDemoMode || hasPermission(user.role, "canCreateIncident"));
+  const canUpdate = user && (isDemoMode || hasPermission(user.role, "canUpdateIncident"));
 
   const filteredIncidents = incidents.filter((inc) => {
     const matchesSearch =
@@ -103,7 +110,7 @@ export default function IncidentsPage() {
     const res = await incidentService.updateIncidentStatus(
       selectedIncident.id,
       newStatus,
-      statusNote || `Operational status transitioned to ${newStatus}.`,
+      statusNote || `Local exercise status changed to ${newStatus}.`,
       user
     );
 
@@ -111,7 +118,7 @@ export default function IncidentsPage() {
       setStatusSuccess(`Status updated to ${newStatus}`);
       setStatusNote("");
       setTimeout(() => setStatusSuccess(null), 3000);
-    }
+    } else setStatusSuccess(res.error || "Incident status update unavailable.");
     setUpdatingStatus(false);
   };
 
@@ -125,6 +132,7 @@ export default function IncidentsPage() {
         officerRole: user?.role,
         organization: user?.organization,
         callsign: user?.callsign,
+        dataClassification: "PROTOTYPE EXPORT // NOT VERIFIED OR OPERATIONAL",
       });
       if (ok) {
         setPdfSuccess(`PDF Downloaded: ${selectedIncident.eventCode}.pdf`);
@@ -147,6 +155,7 @@ export default function IncidentsPage() {
         officerRole: user?.role,
         organization: user?.organization,
         callsign: user?.callsign,
+        dataClassification: "PROTOTYPE EXPORT // NOT VERIFIED OR OPERATIONAL",
       });
       if (ok) {
         setCsvSuccess(`CSV Exported: ${selectedIncident.eventCode || selectedIncident.id}.csv`);
@@ -160,7 +169,7 @@ export default function IncidentsPage() {
   };
 
   return (
-    <AppShell pageTitle="Incidents // Multi-Hazard Triage & Escalation Tracking">
+    <AppShell pageTitle="Incident Exercise Workspace // Not Operational">
       <div className="flex-1 flex flex-col p-4 md:p-6 gap-6 max-w-7xl mx-auto w-full select-none">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/10">
@@ -168,17 +177,19 @@ export default function IncidentsPage() {
             <div className="flex items-center gap-2 mb-1">
               <Flame className="w-5 h-5 text-isie-primary" />
               <h1 className="font-mono text-xl font-bold uppercase tracking-wider text-white">
-                Active Crisis & Operational Incident Management
+                Incident Exercise Workspace
               </h1>
             </div>
             <p className="text-xs text-isie-text-secondary">
-              Canonical situation intelligence records feeding 2D India Tactical Map, 3D Globe, Alerts, and Risk cascades.
+              {isDemoMode
+                ? "SIMULATED EXERCISE RECORDS ONLY. No real incident monitoring, response authority, or dispatch is provided."
+                : "Verified operational incident feed unavailable. No live incident status is inferred."}
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <TacticalBadge variant={isDemoMode ? "cyan" : "orange"} size="sm" pulse={incidents.length > 0}>
-              {isDemoMode ? "DEMO SIMULATION" : "LIVE FIRESTORE"} // {incidents.length} INCIDENTS
+              {isDemoMode ? `SIMULATED FIXTURE RECORDS: ${incidents.length}` : "OPERATIONAL DATA UNAVAILABLE"}
             </TacticalBadge>
 
             <TacticalButton
@@ -192,6 +203,12 @@ export default function IncidentsPage() {
             </TacticalButton>
           </div>
         </div>
+
+        {incidentLoadError && (
+          <div role="alert" className="border border-red-500/40 bg-red-950/30 p-3 font-mono text-xs text-red-200">
+            INCIDENT DATA UNAVAILABLE // {incidentLoadError}
+          </div>
+        )}
 
         {/* Filter and Search Bar */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
@@ -234,11 +251,11 @@ export default function IncidentsPage() {
                 description={
                   isDemoMode
                     ? "No synthetic incidents match the active search or severity filter."
-                    : "No operational incidents currently active in this sector. Click '+ CREATE INCIDENT' to initialize a situation record."
+                    : "Operational incident data is unavailable. No active/clear state can be inferred."
                 }
                 actionLabel={canCreate ? "+ CREATE INCIDENT" : undefined}
                 onAction={canCreate ? () => setIsCreateModalOpen(true) : undefined}
-                statusText={isDemoMode ? "SIMULATION STANDBY" : "OPERATIONAL CLEAR"}
+                statusText={isDemoMode ? "SIMULATION DATA UNAVAILABLE" : "INSUFFICIENT VERIFIED DATA"}
               />
             ) : (
               filteredIncidents.map((incident) => {
@@ -268,7 +285,7 @@ export default function IncidentsPage() {
                           size="sm"
                           pulse={incident.severity === "CRITICAL"}
                         >
-                          {incident.severity}
+                          {isDemoMode ? `SIMULATED ${incident.severity}` : "NOT ASSESSED"}
                         </TacticalBadge>
                         <span className="text-[10px] text-isie-text-dim px-1.5 py-0.5 rounded-xs bg-white/5 border border-white/10">
                           {incident.status}
@@ -290,15 +307,15 @@ export default function IncidentsPage() {
 
                     <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5 font-mono text-[11px]">
                       <div>
-                        <span className="text-isie-text-dim block">POPULATION:</span>
+                        <span className="text-isie-text-dim block">POPULATION EXPOSURE:</span>
                         <span className="text-white font-bold">
-                          {incident.populationAtRisk.toLocaleString()}
+                          NOT ASSESSED
                         </span>
                       </div>
                       <div>
-                        <span className="text-isie-text-dim block">RELOC. INDEX:</span>
+                        <span className="text-isie-text-dim block">RELOCATION PRIORITY:</span>
                         <span className="text-isie-primary font-bold">
-                          {incident.relocationScore || 65} / 100
+                          NOT ASSESSED
                         </span>
                       </div>
                     </div>
@@ -332,14 +349,13 @@ export default function IncidentsPage() {
                         {selectedIncident.severity}
                       </TacticalBadge>
                       <TacticalBadge variant="safe" size="sm">
-                        STATUS: {selectedIncident.status}
+                        STATUS: {isDemoMode ? `SIMULATED ${selectedIncident.status}` : "NOT ASSESSED"}
                       </TacticalBadge>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs text-isie-cyan hidden sm:inline">
-                        LAT: {selectedIncident.coordinates.lat}°N / LNG:{" "}
-                        {selectedIncident.coordinates.lng}°E
+                      <span className="font-mono text-xs text-amber-300 hidden sm:inline">
+                        {isDemoMode ? "FICTIONAL EXERCISE COORDINATE" : "COORDINATE NOT VERIFIED"}
                       </span>
                       <button
                         type="button"
@@ -349,7 +365,7 @@ export default function IncidentsPage() {
                             ? "bg-sky-500/20 text-sky-300 border-sky-500/60 shadow-[0_0_10px_rgba(56,189,248,0.25)] font-bold"
                             : "bg-white/5 text-isie-text-muted hover:text-white border-white/10 hover:border-white/20"
                         }`}
-                        title="Toggle 2D Tactical Map Thumbnail for Incident Coordinates"
+                        title="Toggle illustrative map thumbnail; not for navigation"
                       >
                         <MapPin className="w-3.5 h-3.5 text-sky-400" />
                         <span>{showMapPreview ? "HIDE MAP" : "PREVIEW MAP"}</span>
@@ -372,20 +388,20 @@ export default function IncidentsPage() {
                         onClick={handleExportCsv}
                         disabled={isGeneratingCsv}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/40 hover:border-emerald-500/80 text-emerald-300 rounded-xs font-mono text-xs font-bold tracking-wider transition-all shadow-[0_0_12px_rgba(16,185,129,0.15)] cursor-pointer"
-                        title="Export Operational Incident Dataset as RFC-4180 CSV for GIS and Analytics"
+                        title="Export this prototype record only; it is not verified or operational"
                       >
                         <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>{isGeneratingCsv ? "GENERATING CSV..." : "EXPORT CSV"}</span>
+                        <span>{isGeneratingCsv ? "GENERATING CSV..." : "EXPORT PROTOTYPE CSV"}</span>
                       </button>
 
                       <button
                         onClick={handleExportPdf}
                         disabled={isGeneratingPdf}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 hover:border-amber-500/80 text-amber-300 rounded-xs font-mono text-xs font-bold tracking-wider transition-all shadow-[0_0_12px_rgba(245,158,11,0.15)] cursor-pointer"
-                        title="Generate & Export Operational Incident PDF Summary Report"
+                        title="Export this prototype record only; it is not verified or operational"
                       >
                         <FileDown className="w-3.5 h-3.5 text-amber-400" />
-                        <span>{isGeneratingPdf ? "GENERATING PDF..." : "EXPORT PDF REPORT"}</span>
+                        <span>{isGeneratingPdf ? "GENERATING PDF..." : "EXPORT PROTOTYPE PDF"}</span>
                       </button>
                     </div>
                   </div>
@@ -411,7 +427,7 @@ export default function IncidentsPage() {
                 {/* Summary */}
                 <div className="space-y-2">
                   <span className="font-mono text-xs uppercase tracking-wider text-isie-text-muted font-semibold">
-                    Situation Assessment & Evolution
+                    Fictional Exercise Summary // Not an Assessment
                   </span>
                   <p className="text-xs text-isie-text-primary leading-relaxed bg-white/[0.02] p-3 rounded-xs border border-white/5">
                     {selectedIncident.summary}
@@ -423,25 +439,32 @@ export default function IncidentsPage() {
                   <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xs">
                     <div className="text-[10px] text-isie-text-dim uppercase">EXPOSED HABITATIONS</div>
                     <div className="text-lg font-bold text-white mt-1">
-                      {selectedIncident.affectedHabitationsCount || Math.max(1, Math.round(selectedIncident.populationAtRisk / 3000))} HAMLETS
+                      NOT ASSESSED
                     </div>
                   </div>
                   <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xs">
                     <div className="text-[10px] text-isie-text-dim uppercase">POPULATION EXPOSURE</div>
                     <div className="text-lg font-bold text-white mt-1">
-                      {selectedIncident.populationAtRisk.toLocaleString()}
+                      NOT ASSESSED
                     </div>
+                    {selectedIncident.userProvidedPopulationAtRisk !== undefined && (
+                      <div className="p-3 border border-amber-500/30 bg-amber-950/20 rounded-xs">
+                        <div className="text-[10px] font-mono text-amber-200 uppercase">USER-PROVIDED QUANTITY // UNVERIFIED</div>
+                        <div className="text-sm font-bold text-white mt-1">{selectedIncident.userProvidedPopulationAtRisk.toLocaleString()}</div>
+                        <div className="text-[10px] text-isie-text-dim mt-1">Not used as confirmed exposure, risk score, or response input.</div>
+                      </div>
+                    )}
                   </div>
                   <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xs">
                     <div className="text-[10px] text-isie-text-dim uppercase">CARRYING CAPACITY</div>
                     <div className="text-lg font-bold text-red-400 mt-1">
-                      {selectedIncident.carryingCapacityStatus || "CRITICAL"}
+                      NOT ASSESSED
                     </div>
                   </div>
                   <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xs">
                     <div className="text-[10px] text-isie-text-dim uppercase">RELOCATION PRIORITY</div>
                     <div className="text-lg font-bold text-isie-primary mt-1">
-                      {selectedIncident.relocationScore || 85} / 100
+                      NOT ASSESSED
                     </div>
                   </div>
                 </div>
@@ -465,32 +488,32 @@ export default function IncidentsPage() {
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px]">
                     <div>
                       <span className="text-isie-text-dim block">STATE / PROVINCE:</span>
-                      <span className="text-white">{selectedIncident.state || "Uttarakhand"}</span>
+                      <span className="text-white">{selectedIncident.state || "NOT PROVIDED"}</span>
                     </div>
                     <div>
                       <span className="text-isie-text-dim block">DISTRICT:</span>
-                      <span className="text-white">{selectedIncident.district || "Chamoli"}</span>
+                      <span className="text-white">{selectedIncident.district || "NOT PROVIDED"}</span>
                     </div>
                     <div>
                       <span className="text-isie-text-dim block">AFFECTED AREA:</span>
-                      <span className="text-white">{selectedIncident.affectedAreaKm2 || "35"} km²</span>
+                      <span className="text-white">{selectedIncident.affectedAreaKm2 ?? "NOT ASSESSED"}{selectedIncident.affectedAreaKm2 !== undefined ? " km² (fixture/input)" : ""}</span>
                     </div>
                     <div>
                       <span className="text-isie-text-dim block">INFRASTRUCTURE:</span>
                       <span className="text-amber-300 truncate block">
-                        {selectedIncident.infrastructureImpact || "Access corridors compromised"}
+                        {selectedIncident.infrastructureImpact || "NOT ASSESSED"}
                       </span>
                     </div>
                     <div>
                       <span className="text-isie-text-dim block">FACILITIES HIT:</span>
                       <span className="text-white">
-                        {selectedIncident.criticalFacilitiesAffected || 2} installations
+                        {selectedIncident.criticalFacilitiesAffected ?? "NOT ASSESSED"}{selectedIncident.criticalFacilitiesAffected !== undefined ? " (fixture/input)" : ""}
                       </span>
                     </div>
                     <div>
                       <span className="text-isie-text-dim block">LOGGED BY:</span>
                       <span className="text-isie-cyan truncate block">
-                        {selectedIncident.createdByName || "Sector Operator"}
+                        {selectedIncident.createdByName || "NOT PROVIDED"}
                       </span>
                     </div>
                   </div>
@@ -499,27 +522,27 @@ export default function IncidentsPage() {
                 {/* Source Verification Chains */}
                 <div className="space-y-2">
                   <span className="font-mono text-xs uppercase tracking-wider text-isie-text-muted font-semibold">
-                    Fused Intelligence Sources ({selectedIncident.sourceAgencies?.length || selectedIncident.sourceCount})
+                    Source labels // not verification ({selectedIncident.sourceAgencies?.length || 0})
                   </span>
                   <div className="flex flex-wrap gap-2">
-                    {(selectedIncident.sourceAgencies || ["Official Telemetry"]).map((agency) => (
+                    {(selectedIncident.sourceAgencies || ["Source unavailable"]).map((agency) => (
                       <span
                         key={agency}
                         className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/5 border border-white/10 rounded-xs font-mono text-xs text-isie-text-secondary"
                       >
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
                         <span>{agency}</span>
                       </span>
                     ))}
                   </div>
                 </div>
 
-                {/* Operational Status Adjustment (Only for Authenticated Operators) */}
+                {/* Local-only exercise status controls */}
                 {canUpdate && (
                   <div className="p-3 bg-isie-panel-light/40 border border-white/10 rounded-xs space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-xs font-bold uppercase tracking-wider text-white">
-                        Adjust Operational Posture / Status
+                        Adjust Local Exercise Status
                       </span>
                       {statusSuccess && (
                         <span className="font-mono text-xs text-emerald-400">{statusSuccess}</span>
@@ -554,8 +577,8 @@ export default function IncidentsPage() {
                 </h4>
                 <p className="text-xs text-isie-text-dim max-w-sm">
                   {isDemoMode
-                    ? "Select an active incident from the list to inspect operational details."
-                    : "When operational incidents are created, detailed telemetry will appear here."}
+                    ? "Select a simulated exercise record to view its fictional details."
+                    : "No operational incident feed or telemetry is connected."}
                 </p>
               </div>
             )}
@@ -587,7 +610,7 @@ export default function IncidentsPage() {
                       onClick={handleExportCsv}
                       disabled={isGeneratingCsv}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xs font-mono text-xs bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/40 hover:border-emerald-500/70 text-emerald-300 font-bold uppercase transition-colors cursor-pointer"
-                      title="Export Operational Incident Dataset as RFC-4180 CSV for GIS, Spreadsheets, and Analytics"
+                      title="Export prototype data only; not verified or operational"
                     >
                       <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
                       <span>{isGeneratingCsv ? "EXPORTING..." : "EXPORT CSV"}</span>
@@ -597,7 +620,7 @@ export default function IncidentsPage() {
                       onClick={handleExportPdf}
                       disabled={isGeneratingPdf}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xs font-mono text-xs bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 hover:border-amber-500/70 text-amber-300 font-bold uppercase transition-colors cursor-pointer"
-                      title="Generate & Export Operational Incident PDF Summary Report"
+                      title="Export prototype data only; not verified or operational"
                     >
                       <FileDown className="w-3.5 h-3.5 text-amber-400" />
                       <span>{isGeneratingPdf ? "EXPORTING..." : "EXPORT PDF"}</span>

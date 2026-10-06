@@ -4,23 +4,54 @@ import React, { useState, useEffect } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Truck, ShieldCheck, Users, HeartPulse, Droplets, Building, Search, Filter } from "lucide-react";
 import { TacticalBadge } from "@/components/ui/TacticalBadge";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { resourceService } from "@/lib/services/resourceService";
 import { ResponseResource } from "@/data/demo/resources";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 export default function ResourcesPage() {
+  const { isDemoMode } = useAuth();
   const [resources, setResources] = useState<ResponseResource[]>([]);
   const [categoryFilter, setCategoryFilter] = useState("ALL");
+  const [notice, setNotice] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    resourceService.getResources(categoryFilter).then(setResources);
-  }, [categoryFilter]);
+    setLoadError(null);
+    if (isDemoMode) {
+      return resourceService.subscribeDemoResources((items) => {
+        setResources(categoryFilter === "ALL" ? items : items.filter((item) => item.category === categoryFilter));
+        setLoadError(null);
+      }, (error) => {
+        setResources([]);
+        setLoadError(error instanceof Error ? error.message : "Local demo inventory could not be loaded.");
+      });
+    }
+    resourceService.getResources(categoryFilter, false)
+      .then(setResources)
+      .catch((error) => {
+        setResources([]);
+        setLoadError(error instanceof Error ? error.message : "Resource inventory could not be loaded.");
+      });
+  }, [categoryFilter, isDemoMode]);
+
+  const changeSimulatedAllocation = async (id: string, delta: number) => {
+    try {
+      const changed = await resourceService.simulateAllocation(id, delta, isDemoMode);
+      setNotice(changed
+        ? "Exercise allocation changed in this browser only. No resource was reserved, contacted, or dispatched."
+        : "Local simulation update was unavailable.");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Unable to save the local allocation change.");
+    }
+  };
 
   const categories = [
     { id: "ALL", label: "All Assets" },
-    { id: "DISASTER_BATTALION", label: "NDRF Battalions" },
-    { id: "RELIEF_SHELTER", label: "Relief Shelters" },
-    { id: "HEALTHCARE_UNIT", label: "Medical Teams" },
-    { id: "WATER_LOGISTICS", label: "Water & Logistics" },
+    { id: "DISASTER_BATTALION", label: "Rescue team fixtures" },
+    { id: "RELIEF_SHELTER", label: "Shelter fixtures" },
+    { id: "HEALTHCARE_UNIT", label: "Medical fixtures" },
+    { id: "WATER_LOGISTICS", label: "Water fixtures" },
   ];
 
   return (
@@ -36,16 +67,27 @@ export default function ResourcesPage() {
               </h1>
             </div>
             <p className="text-xs text-isie-text-secondary">
-              Deployment tracking of specialized search & rescue battalions, designated safe havens, and medical corridors.
+              {isDemoMode
+                ? "SIMULATED EXERCISE INVENTORY ONLY. Values are fictional and do not indicate real availability."
+                : "Resource availability requires a configured, verified source feed; no inventory is currently connected."}
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <TacticalBadge variant="safe" size="sm">
-              ASSETS READY: {resources.length}
+            <TacticalBadge variant={isDemoMode ? "cyan" : "muted"} size="sm">
+              {isDemoMode ? "SIMULATED RESOURCE FIXTURES" : "RESOURCE INVENTORY UNAVAILABLE"}: {resources.length}
             </TacticalBadge>
           </div>
         </div>
+
+        {isDemoMode && notice && (
+          <div role="status" className="border border-amber-500/30 bg-amber-950/20 p-3 font-mono text-xs text-amber-100">{notice}</div>
+        )}
+        {loadError && (
+          <div role="alert" className="border border-red-500/40 bg-red-950/30 p-3 font-mono text-xs text-red-200">
+            RESOURCE DATA UNAVAILABLE // {loadError}
+          </div>
+        )}
 
         {/* Filter Pills */}
         <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
@@ -65,7 +107,21 @@ export default function ResourcesPage() {
         </div>
 
         {/* Resource Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 min-w-0">
+        {loadError ? (
+          <EmptyState
+            icon="database"
+            title="Resource Data Unavailable"
+            description={loadError}
+            statusText="LOAD ERROR"
+          />
+        ) : resources.length === 0 ? (
+          <EmptyState
+            icon="database"
+            title="No Verified Resource Inventory"
+            description="Shelter, responder, medical, and logistics availability is unavailable until an authorized source is integrated. No operational resource values are being shown."
+            statusText="DATA UNAVAILABLE"
+          />
+        ) : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 min-w-0">
           {resources.map((res) => (
             <div
               key={res.id}
@@ -74,7 +130,7 @@ export default function ResourcesPage() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-mono text-xs text-isie-cyan font-semibold">
-                    {res.id}
+                    SIMULATED // {res.id}
                   </span>
                   <TacticalBadge
                     variant={
@@ -86,7 +142,7 @@ export default function ResourcesPage() {
                     }
                     size="sm"
                   >
-                    {res.status}
+                    SIMULATED {res.status}
                   </TacticalBadge>
                 </div>
 
@@ -102,7 +158,7 @@ export default function ResourcesPage() {
                 {/* Progress of Allocation */}
                 <div className="space-y-1 font-mono text-[11px]">
                   <div className="flex justify-between text-isie-text-dim">
-                    <span>CAPACITY OCCUPANCY</span>
+                    <span>ILLUSTRATIVE CAPACITY (NO REAL INVENTORY)</span>
                     <span className="text-white font-semibold">
                       {res.currentAllocated.toLocaleString()} / {res.totalCapacity.toLocaleString()}
                     </span>
@@ -122,12 +178,21 @@ export default function ResourcesPage() {
               </div>
 
               <div className="pt-3 border-t border-white/10 flex items-center justify-between font-mono text-[10px] text-isie-text-dim">
-                <span>CALLSIGN: {res.contactCallsign}</span>
-                <span>READINESS: {res.readinessPercentage}%</span>
+                <span>EXERCISE LABEL: {res.contactCallsign}</span>
+                <span>READINESS: NOT ASSESSED</span>
               </div>
+              {isDemoMode && (
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-amber-500/20 font-mono text-[10px]">
+                  <span className="text-amber-200">SIMULATED LOCAL ALLOCATION // NO DEPLOYMENT</span>
+                  <div className="flex gap-1">
+                    <button type="button" onClick={() => changeSimulatedAllocation(res.id, -1)} className="px-2 py-1 border border-white/20 rounded text-white hover:bg-white/10" aria-label={`Decrease simulated allocation for ${res.name}`}>-1</button>
+                    <button type="button" onClick={() => changeSimulatedAllocation(res.id, 1)} className="px-2 py-1 border border-white/20 rounded text-white hover:bg-white/10" aria-label={`Increase simulated allocation for ${res.name}`}>+1</button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
-        </div>
+        </div>}
       </div>
     </AppShell>
   );

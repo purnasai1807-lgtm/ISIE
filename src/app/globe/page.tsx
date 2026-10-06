@@ -17,14 +17,20 @@ export default function GlobePage() {
   const [mounted, setMounted] = useState(false);
   const [incidents, setIncidents] = useState<IntelligenceEvent[]>([]);
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
+  const [incidentLoadError, setIncidentLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
+    setIncidentLoadError(null);
     const unsubscribe = incidentService.subscribeIncidents(isDemoMode, (data) => {
       setIncidents(data);
+      setIncidentLoadError(null);
+    }, (error) => {
+      setIncidents([]);
+      setIncidentLoadError(error.message || "Exercise records could not be loaded.");
     });
     return () => {
       if (typeof unsubscribe === "function") unsubscribe();
@@ -55,17 +61,22 @@ export default function GlobePage() {
 
           <div className="flex items-center gap-3">
             <TacticalBadge variant={isDemoMode ? "cyan" : "orange"} size="sm">
-              {isDemoMode ? "DEMO SIMULATION" : "OPERATIONAL FIRESTORE"} // {incidents.length} NODES
+              {isDemoMode ? "DEMO SIMULATION RECORDS" : "VERIFICATION UNAVAILABLE"} // {isDemoMode ? incidents.length : "NO FEED"}
             </TacticalBadge>
             <div className="hidden sm:flex items-center gap-1.5 font-mono text-xs text-isie-text-muted">
               <Satellite className="w-3.5 h-3.5 text-amber-400" />
-              <span>ORBITAL SYNC: NOMINAL</span>
+              <span>STATIC GLOBE // NO ORBITAL FEED</span>
             </div>
           </div>
         </div>
 
         {/* 3D Globe Container */}
         <div className="flex-1 min-h-0 relative">
+          {incidentLoadError && (
+            <div role="alert" className="absolute top-3 left-3 right-3 z-20 border border-red-500/40 bg-red-950/80 p-3 font-mono text-xs text-red-200">
+              EXERCISE DATA UNAVAILABLE // {incidentLoadError}
+            </div>
+          )}
           {mounted ? (
             <Global3DView
               incidents={incidents}

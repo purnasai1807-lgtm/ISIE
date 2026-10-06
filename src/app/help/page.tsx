@@ -63,7 +63,7 @@ export default function HelpPage() {
           </div>
 
           <p className="text-xs text-isie-text-secondary leading-relaxed">
-            ISIE serves national command authorities, state disaster management offices, and field dispatchers. It integrates spaceborne SAR imagery, Doppler radar precipitation vectors, river hydrographs, and census demographics to generate actionable evacuation and resource deployment decisions.
+            This non-operational prototype demonstrates a decision-support interface using fictional fixtures and browser-local exercise notes. It does not connect satellite, weather, hydrological, population, infrastructure, or emergency-resource feeds, and it does not generate evacuation or deployment decisions.
           </p>
         </div>
 
@@ -95,7 +95,7 @@ export default function HelpPage() {
             ● Demo Environment & Prototype Notice
           </div>
           <p className="text-[11px] text-isie-text-secondary leading-relaxed">
-            All data currently rendered across incidents, carrying capacity scores, and alerts is synthetic demonstration data. Upstream government APIs (IMD, CWC, ISRO NDEM, Copernicus) are prepared with abstract service adapters for production deployment.
+            Demo records are fictional; user-created notes remain unverified and local to this browser. External provider, AI grounding, and transcription routes are disabled. No assessment or operational action is produced.
           </p>
         </div>
       </div>

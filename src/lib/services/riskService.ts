@@ -7,6 +7,7 @@ import { CarryingCapacityMetrics, HazardRedZone, RelocationIntelligence } from "
 import { DEMO_RED_ZONES, DEMO_CARRYING_CAPACITY, DEMO_RELOCATION_PRIORITIES } from "@/data/demo/riskScores";
 import { collection, doc, getDocs, getDoc, query } from "firebase/firestore";
 import { db, auth, handleFirestoreError, OperationType } from "@/lib/firebase/client";
+import { hasFreshVerifiedProvenance } from "@/lib/utils/dataQuality";
 
 export interface IRiskService {
   getHazardRedZones(scopeId?: string, isDemoMode?: boolean): Promise<HazardRedZone[]>;
@@ -15,10 +16,11 @@ export interface IRiskService {
 }
 
 export class RiskService implements IRiskService {
-  async getHazardRedZones(_scopeId?: string, isDemoMode: boolean = true): Promise<HazardRedZone[]> {
-    if (isDemoMode || !auth.currentUser) {
+  async getHazardRedZones(_scopeId?: string, isDemoMode: boolean = false): Promise<HazardRedZone[]> {
+    if (isDemoMode) {
       return [...DEMO_RED_ZONES];
     }
+    if (!auth.currentUser) return [];
 
     try {
       const col = collection(db, "hazard_zones");
@@ -26,28 +28,27 @@ export class RiskService implements IRiskService {
       if (snapshot.empty) {
         return [];
       }
-      return snapshot.docs.map((d) => ({
-        id: d.id,
-        ...(d.data() as Omit<HazardRedZone, "id">),
-      }));
+      return snapshot.docs
+        .filter((d) => hasFreshVerifiedProvenance(d.data()))
+        .map((d) => ({ id: d.id, ...(d.data() as Omit<HazardRedZone, "id">) }));
     } catch (err) {
       handleFirestoreError(err, OperationType.LIST, "hazard_zones");
       return [];
     }
   }
 
-  async getCarryingCapacityAssessment(zoneId?: string, isDemoMode: boolean = true): Promise<CarryingCapacityMetrics | null> {
-    if (isDemoMode || !auth.currentUser) {
+  async getCarryingCapacityAssessment(zoneId?: string, isDemoMode: boolean = false): Promise<CarryingCapacityMetrics | null> {
+    if (isDemoMode) {
       return DEMO_CARRYING_CAPACITY;
     }
+    if (!auth.currentUser) return null;
 
     try {
       if (zoneId) {
         const docRef = doc(db, "carrying_capacity", zoneId);
         const snap = await getDoc(docRef);
-        if (snap.exists()) {
-          return { zoneId: snap.id, ...(snap.data() as Omit<CarryingCapacityMetrics, "zoneId">) };
-        }
+        if (!snap.exists() || !hasFreshVerifiedProvenance(snap.data())) return null;
+        return { zoneId: snap.id, ...(snap.data() as Omit<CarryingCapacityMetrics, "zoneId">) };
       }
 
       // If no zoneId provided, fetch first available
@@ -56,7 +57,8 @@ export class RiskService implements IRiskService {
       if (snapshot.empty) {
         return null;
       }
-      const first = snapshot.docs[0];
+      const first = snapshot.docs.find((item) => hasFreshVerifiedProvenance(item.data()));
+      if (!first) return null;
       return { zoneId: first.id, ...(first.data() as Omit<CarryingCapacityMetrics, "zoneId">) };
     } catch (err) {
       handleFirestoreError(err, OperationType.GET, `carrying_capacity/${zoneId || "all"}`);
@@ -64,10 +66,11 @@ export class RiskService implements IRiskService {
     }
   }
 
-  async getRelocationPriorities(_scopeId?: string, isDemoMode: boolean = true): Promise<RelocationIntelligence[]> {
-    if (isDemoMode || !auth.currentUser) {
+  async getRelocationPriorities(_scopeId?: string, isDemoMode: boolean = false): Promise<RelocationIntelligence[]> {
+    if (isDemoMode) {
       return [...DEMO_RELOCATION_PRIORITIES];
     }
+    if (!auth.currentUser) return [];
 
     try {
       const col = collection(db, "relocation_plans");
@@ -75,10 +78,9 @@ export class RiskService implements IRiskService {
       if (snapshot.empty) {
         return [];
       }
-      return snapshot.docs.map((d) => ({
-        zoneId: d.id,
-        ...(d.data() as Omit<RelocationIntelligence, "zoneId">),
-      }));
+      return snapshot.docs
+        .filter((d) => hasFreshVerifiedProvenance(d.data()))
+        .map((d) => ({ zoneId: d.id, ...(d.data() as Omit<RelocationIntelligence, "zoneId">) }));
     } catch (err) {
       handleFirestoreError(err, OperationType.LIST, "relocation_plans");
       return [];

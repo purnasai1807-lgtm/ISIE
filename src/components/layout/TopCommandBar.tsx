@@ -67,18 +67,18 @@ export const TopCommandBar: React.FC<TopCommandBarProps> = ({
   }, []);
 
   useEffect(() => {
-    notificationService.getNotifications().then(setNotifications);
-  }, []);
+    notificationService.getNotifications(isDemoMode).then(setNotifications);
+  }, [isDemoMode]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const handleMarkAllRead = async () => {
-    await Promise.all(notifications.map((n) => notificationService.markAsRead(n.id)));
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    const results = await Promise.all(notifications.map((n) => notificationService.markAsRead(n.id, isDemoMode)));
+    if (results.every(Boolean)) setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
   const handleMarkSingleRead = async (id: string) => {
-    await notificationService.markAsRead(id);
+    if (!(await notificationService.markAsRead(id, isDemoMode))) return;
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );

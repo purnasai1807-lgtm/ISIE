@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import { Sidebar } from "./Sidebar";
 import { TopCommandBar } from "./TopCommandBar";
 import { CommandPalette } from "../command/CommandPalette";
+import { useAuth } from "@/lib/auth/AuthContext";
+import { resetDemoWorkspace } from "@/lib/prototype/demoWorkspace.mjs";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -18,6 +20,7 @@ export const AppShell: React.FC<AppShellProps> = ({
 }) => {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [quotaExceeded, setQuotaExceeded] = useState(false);
+  const { isDemoMode } = useAuth();
 
   useEffect(() => {
     const handleQuota = () => setQuotaExceeded(true);
@@ -72,6 +75,27 @@ export const AppShell: React.FC<AppShellProps> = ({
           title={pageTitle}
           scopeBadge={scopeBadge}
         />
+
+        {isDemoMode && (
+          <div role="note" className="shrink-0 bg-amber-950 border-y border-amber-400/60 px-3 py-2 text-center text-[10px] sm:text-xs font-mono font-bold tracking-wide text-amber-100">
+            NON-OPERATIONAL DEMO / SIMULATION — SAMPLE VALUES ARE NOT LIVE; USER ENTRIES ARE UNVERIFIED. NO LIVE FEEDS, ALERT DISPATCH OR EVACUATION ORDERS. BACKEND productionReady=false.
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm("Reset only this browser's ISIE prototype demo edits?")) {
+                  try {
+                    resetDemoWorkspace();
+                  } catch (error) {
+                    window.alert(error instanceof Error ? error.message : "Unable to reset prototype demo data.");
+                  }
+                }
+              }}
+              className="ml-3 underline underline-offset-2 hover:text-white"
+            >
+              RESET DEMO EDITS
+            </button>
+          </div>
+        )}
 
         {/* Content Viewport */}
         <main className="flex-1 overflow-y-auto scrollbar-thin relative flex flex-col min-h-0">

@@ -80,7 +80,7 @@ perspective with a steep tilt.
 
 ### References
 
-*   https://maps.googleapis.com/maps/api/js?loading=async&key=AIzaSyA6myHzS10YXdcazAFalmXvDkrYCp5cLc8&libraries=maps3d
+*   https://maps.googleapis.com/maps/api/js?loading=async&key=YOUR_API_KEY&libraries=maps3d
 *   https://developers.google.com/maps/documentation/javascript/3d/get-started
 
 ## See Also

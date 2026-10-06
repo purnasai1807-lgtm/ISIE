@@ -22,6 +22,7 @@ export default function GeospatialIntelligencePage() {
   const [mapMode, setMapMode] = useState<MapDisplayMode>("2D_MAP");
   const [basemap, setBasemap] = useState<BasemapMode>("street");
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
+  const [incidentLoadError, setIncidentLoadError] = useState<string | null>(null);
 
   // Active layer visibility map
   const [activeLayers, setActiveLayers] = useState<Record<string, boolean>>(() => {
@@ -46,8 +47,13 @@ export default function GeospatialIntelligencePage() {
   }, []);
 
   React.useEffect(() => {
+    setIncidentLoadError(null);
     const unsubscribe = incidentService.subscribeIncidents(isDemoMode, (data) => {
       setIncidents(data);
+      setIncidentLoadError(null);
+    }, (error) => {
+      setIncidents([]);
+      setIncidentLoadError(error.message || "Exercise records could not be loaded.");
     });
     return () => {
       if (typeof unsubscribe === "function") unsubscribe();
@@ -96,13 +102,18 @@ export default function GeospatialIntelligencePage() {
               </TacticalBadge>
               <div className="hidden sm:flex items-center gap-1.5 font-mono text-xs text-isie-text-muted">
                 <Satellite className="w-3.5 h-3.5 text-amber-400" />
-                <span>SENTINEL-1 SAR: READY</span>
+                <span>REMOTE-SENSING PROVIDER: NOT CONNECTED</span>
               </div>
             </div>
           </div>
 
           {/* Interactive Map View */}
           <div className="flex-1 min-h-0 relative overflow-hidden">
+            {incidentLoadError && (
+              <div role="alert" className="absolute top-3 left-3 right-3 z-20 border border-red-500/40 bg-red-950/80 p-3 font-mono text-xs text-red-200">
+                EXERCISE INCIDENT DATA UNAVAILABLE // {incidentLoadError}
+              </div>
+            )}
             {!mounted ? (
               <div className="w-full h-full min-h-[360px] bg-isie-bg-deep flex flex-col items-center justify-center font-mono text-xs text-isie-cyan/70 gap-2.5">
                 <div className="w-7 h-7 rounded-full border-2 border-isie-cyan border-t-transparent animate-spin" />
@@ -338,7 +349,7 @@ export default function GeospatialIntelligencePage() {
 
           {/* Bottom Satellite Telemetry Status */}
           <div className="p-3 border-t border-white/10 bg-isie-panel-light/20 text-[10px] font-mono text-isie-text-dim flex justify-between items-center">
-            <span>RASTER/VECTOR FUSION: ACTIVE</span>
+            <span>MAP OVERLAYS: LOCAL UI CONTROLS ONLY // NO DATA PROVIDERS CONNECTED</span>
             <span className="text-cyan-400">
               ACTIVE: {Object.values(activeLayers).filter(Boolean).length}/{DEFAULT_MAP_LAYERS.length}
             </span>

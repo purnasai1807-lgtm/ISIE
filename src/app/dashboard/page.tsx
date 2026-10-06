@@ -11,7 +11,6 @@ import { RightIntelPanel } from "@/components/panels/RightIntelPanel";
 import { TimelineStrip } from "@/components/timeline/TimelineStrip";
 import { TacticalBadge } from "@/components/ui/TacticalBadge";
 import { Maximize2, Minimize2, Flame, Users, Radio, MapPin, Mic, Globe, Plus } from "lucide-react";
-import { DEMO_INCIDENTS } from "@/data/demo/incidents";
 import { MapsGroundingModal } from "@/components/intel/MapsGroundingModal";
 import { AudioTranscribeModal } from "@/components/intel/AudioTranscribeModal";
 import { SearchGroundingModal } from "@/components/intel/SearchGroundingModal";
@@ -34,17 +33,23 @@ export default function DashboardPage() {
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [transcribeModalOpen, setTranscribeModalOpen] = useState(false);
   const [isCreateIncidentOpen, setIsCreateIncidentOpen] = useState(false);
-  const [incidents, setIncidents] = useState<IntelligenceEvent[]>(isDemoMode ? DEMO_INCIDENTS : []);
+  const [incidents, setIncidents] = useState<IntelligenceEvent[]>([]);
+  const [incidentLoadError, setIncidentLoadError] = useState<string | null>(null);
 
-  const canCreate = !!user && hasPermission(user.role, "canCreateIncident");
+  const canCreate = !!user && (isDemoMode || hasPermission(user.role, "canCreateIncident"));
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
+    setIncidentLoadError(null);
     const unsubscribe = incidentService.subscribeIncidents(isDemoMode, (realIncidents) => {
       setIncidents(realIncidents);
+      setIncidentLoadError(null);
+    }, (error) => {
+      setIncidents([]);
+      setIncidentLoadError(error.message || "Incident exercise records could not be loaded.");
     });
 
     return () => {
@@ -52,12 +57,8 @@ export default function DashboardPage() {
     };
   }, [isDemoMode]);
 
-  // Compute key aggregate metrics from dynamic incident data
-  const totalAtRisk = incidents.reduce((acc, curr) => acc + curr.populationAtRisk, 0);
-  const criticalCount = incidents.filter((i) => i.severity === "CRITICAL").length;
-
   return (
-    <AppShell pageTitle="Command Center // Unified Operational Picture">
+    <AppShell pageTitle="Prototype Dashboard // Data Unavailable">
       <div className="flex-1 flex flex-col h-full min-h-0 overflow-y-auto lg:overflow-hidden bg-isie-bg-deep select-none">
         {/* ============================================================ */}
         {/* 1. SECONDARY STATUS / SITUATION STRIP (Single Clean Line)   */}
@@ -66,14 +67,18 @@ export default function DashboardPage() {
           {/* Left: Crisis & Defense State */}
           <div className="flex items-center gap-2.5 min-w-0 shrink-0">
             <span className="w-2 h-2 rounded-full bg-red-500 animate-ping shrink-0" />
-            <span className="font-bold text-white uppercase tracking-wider">
-              DEFCON-2 CRISIS STATE
-            </span>
+            <span className="font-bold text-white uppercase tracking-wider">PROTOTYPE: NOT OPERATIONAL</span>
             <span className="text-isie-text-muted hidden sm:inline">|</span>
             <span className="text-isie-text-secondary hidden sm:inline truncate max-w-[220px]">
-              INDIA NATIONAL SECTOR WATCH
+              NO VERIFIED OPERATIONAL FEED
             </span>
           </div>
+
+          {incidentLoadError && (
+            <div role="alert" className="mx-3 mt-2 border border-red-500/40 bg-red-950/30 p-2 font-mono text-[11px] text-red-200">
+              INCIDENT DATA UNAVAILABLE // {incidentLoadError}
+            </div>
+          )}
 
           {/* Right: Key Command Telemetry Indicators (Gracefully Collapsed) */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-3">
@@ -92,52 +97,51 @@ export default function DashboardPage() {
             {/* Active Incident Badge */}
             <div className="flex items-center gap-1.5 px-2 py-0.5 bg-white/[0.04] border border-white/10 rounded-xs">
               <Flame className="w-3.5 h-3.5 text-isie-primary shrink-0" />
-              <span className="text-isie-text-dim text-[11px]">ACTIVE:</span>
-              <span className="font-bold text-white">{incidents.length}</span>
-              <span className="text-red-400 text-[10px] font-semibold">({criticalCount} CRIT)</span>
+              <span className="text-isie-text-dim text-[11px]">{isDemoMode ? "SIMULATED CASES:" : "VERIFICATION UNAVAILABLE:"}</span>
+              <span className="font-bold text-white">{isDemoMode ? incidents.length : "UNAVAILABLE"}</span>
             </div>
 
             {/* Population At Risk (Hidden on mobile) */}
             <div className="hidden md:flex items-center gap-1.5 px-2 py-0.5 bg-white/[0.04] border border-white/10 rounded-xs">
               <Users className="w-3.5 h-3.5 text-isie-cyan shrink-0" />
-              <span className="text-isie-text-dim text-[11px]">AT RISK:</span>
-              <span className="font-bold text-amber-300">{totalAtRisk.toLocaleString()}</span>
+              <span className="text-isie-text-dim text-[11px]">POPULATION EXPOSURE:</span>
+              <span className="font-bold text-amber-300">NOT ASSESSED</span>
             </div>
 
             {/* Google Search Grounding Quick Tool */}
             <button
               onClick={() => setSearchModalOpen(true)}
               className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-950/40 hover:bg-amber-900/50 border border-amber-500/30 hover:border-amber-500/60 rounded-xs text-amber-300 text-[11px] transition-colors"
-              title="Query Live Google Search Grounding (Gemini 3.5 Flash)"
+              title="External search is unavailable in this prototype"
             >
               <Globe className="w-3.5 h-3.5 text-amber-400" />
-              <span className="font-semibold tracking-wide hidden sm:inline">SEARCH GROUNDING</span>
+              <span className="font-semibold tracking-wide hidden sm:inline">SEARCH UNAVAILABLE</span>
             </button>
 
             {/* Google Maps Grounding Quick Tool */}
             <button
               onClick={() => setMapsModalOpen(true)}
               className="flex items-center gap-1.5 px-2.5 py-1 bg-sky-950/40 hover:bg-sky-900/50 border border-sky-500/30 hover:border-sky-500/60 rounded-xs text-sky-300 text-[11px] transition-colors"
-              title="Query Google Maps Grounding (Gemini 3.5 Flash)"
+              title="External maps provider is unavailable in this prototype"
             >
               <MapPin className="w-3.5 h-3.5 text-sky-400" />
-              <span className="font-semibold tracking-wide hidden sm:inline">MAPS GROUNDING</span>
+              <span className="font-semibold tracking-wide hidden sm:inline">MAPS UNAVAILABLE</span>
             </button>
 
-            {/* Voice Dispatch & Transcribe Tool */}
+            {/* Audio transcription is unavailable in this non-operational prototype. */}
             <button
               onClick={() => setTranscribeModalOpen(true)}
               className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-950/40 hover:bg-amber-900/50 border border-amber-500/30 hover:border-amber-500/60 rounded-xs text-amber-300 text-[11px] transition-colors"
-              title="Record & Transcribe Voice Dispatch (Gemini 3.5 Transcribe)"
+              title="Microphone capture and transcription are unavailable in this prototype"
             >
               <Mic className="w-3.5 h-3.5 text-amber-400" />
-              <span className="font-semibold tracking-wide hidden sm:inline">VOICE DISPATCH</span>
+              <span className="font-semibold tracking-wide hidden sm:inline">AUDIO UNAVAILABLE</span>
             </button>
 
             {/* Live Telemetry Sensor Stream (Hidden on tablet/mobile) */}
             <div className="hidden xl:flex items-center gap-1.5 px-2 py-0.5 bg-sky-950/40 border border-sky-500/30 rounded-xs text-sky-200 text-[11px]">
               <Radio className="w-3 h-3 text-isie-cyan animate-pulse shrink-0" />
-              <span className="font-semibold tracking-wide">FUSION: LIVE TELEMETRY</span>
+              <span className="font-semibold tracking-wide">EXTERNAL TELEMETRY: NOT CONNECTED</span>
             </div>
           </div>
         </div>

@@ -887,11 +887,11 @@ export const VolumetricHero: React.FC = () => {
                   GLOBAL SPATIAL INTELLIGENCE ENVIRONMENT
                 </div>
                 <div className="text-[11px] text-isie-text-secondary leading-snug">
-                  Multi-sensor telemetry ingestion: Spaceborne SAR, macro-meteorological forecasting, hydrological gauge telemetry, and dynamic risk projection.
+                  Static illustrative map layer. No satellite, weather, hydrology, or live risk feeds are connected.
                 </div>
                 <div className="flex items-center justify-between pt-1 text-[9px] text-isie-text-dim border-t border-white/5">
                   <span>ALT: 421 KM (LEO SYNCHRONIZED)</span>
-                  <span className="text-emerald-400 font-semibold">STATUS: NOMINAL INGESTION</span>
+                  <span className="text-amber-300 font-semibold">STATUS: STATIC ILLUSTRATION</span>
                 </div>
               </div>
 
