@@ -1,11 +1,9 @@
 "use client";
 
-import React, { Component, ErrorInfo, ReactNode, useState, useEffect } from "react";
+import React, { Component, ErrorInfo, ReactNode, useState } from "react";
 import dynamic from "next/dynamic";
 import { RotateCcw, AlertTriangle, Globe } from "lucide-react";
 import { IntelligenceEvent } from "@/lib/types/isie";
-import { isGoogleMapsConfigured } from "@/lib/services/googleMapsLoader";
-import { GoogleMaps3DView } from "./GoogleMaps3DView";
 
 export interface Global3DViewProps {
   className?: string;
@@ -127,39 +125,10 @@ const DynamicThreeGlobeView = dynamic(
 
 export const SafeGlobal3DView: React.FC<Global3DViewProps> = (props) => {
   const [remountKey, setRemountKey] = useState(0);
-  const [useGoogleMaps3D, setUseGoogleMaps3D] = useState<boolean>(false);
-
-  useEffect(() => {
-    const handleAuthFailure = () => {
-      setUseGoogleMaps3D(false);
-    };
-    window.addEventListener("gmp-auth-failure", handleAuthFailure);
-    return () => window.removeEventListener("gmp-auth-failure", handleAuthFailure);
-  }, []);
 
   return (
     <ThreeErrorBoundary key={remountKey} onReset={() => setRemountKey((k) => k + 1)}>
-      <div className="relative w-full h-full">
-        {useGoogleMaps3D ? (
-          <GoogleMaps3DView
-            {...props}
-            onFallbackToThreeGlobe={() => setUseGoogleMaps3D(false)}
-          />
-        ) : (
-          <DynamicThreeGlobeView {...props} />
-        )}
-
-        {isGoogleMapsConfigured() && (
-          <div className="absolute bottom-2.5 left-2.5 z-20">
-            <button
-              onClick={() => setUseGoogleMaps3D(!useGoogleMaps3D)}
-              className="px-2.5 py-1 bg-isie-panel/90 hover:bg-isie-panel border border-white/10 hover:border-white/20 text-[10px] text-isie-cyan hover:text-white rounded-xs font-mono backdrop-blur-md shadow-md transition-colors"
-            >
-              {useGoogleMaps3D ? "SWITCH TO THREE.JS 3D GLOBE" : "TRY GOOGLE 3D TILES"}
-            </button>
-          </div>
-        )}
-      </div>
+      <DynamicThreeGlobeView {...props} />
     </ThreeErrorBoundary>
   );
 };

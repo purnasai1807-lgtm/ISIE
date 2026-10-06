@@ -50,25 +50,25 @@ interface ScenarioBaseline {
 
 const SCENARIO_BASELINES: Record<ScenarioType, ScenarioBaseline> = {
   SCEN_A: {
-    popAtRisk: 12400,
-    hazardArea: 28.5,
+    popAtRisk: 12,
+    hazardArea: 1.2,
     roadCutoffs: 2,
-    shelterLoad: 65,
-    relocationIndex: 54,
+    shelterLoad: 30,
+    relocationIndex: 5,
   },
   SCEN_B: {
-    popAtRisk: 8600,
-    hazardArea: 14.0,
-    roadCutoffs: 5,
-    shelterLoad: 52,
-    relocationIndex: 68,
+    popAtRisk: 8,
+    hazardArea: 0.8,
+    roadCutoffs: 1,
+    shelterLoad: 25,
+    relocationIndex: 4,
   },
   SCEN_C: {
-    popAtRisk: 24000,
-    hazardArea: 46.2,
-    roadCutoffs: 4,
-    shelterLoad: 74,
-    relocationIndex: 62,
+    popAtRisk: 24,
+    hazardArea: 2.4,
+    roadCutoffs: 3,
+    shelterLoad: 40,
+    relocationIndex: 6,
   },
 };
 
@@ -184,10 +184,10 @@ export default function ScenarioAnalysisPage() {
   const comparisonData = useMemo(() => {
     return [
       {
-        metric: "Pop. at Risk",
-        unit: "k people",
-        Baseline: Number((baseline.popAtRisk / 1000).toFixed(1)),
-        WhatIf: Number((whatIf.popAtRisk / 1000).toFixed(1)),
+        metric: "Exercise Input A",
+        unit: "toy units",
+        Baseline: baseline.popAtRisk,
+        WhatIf: whatIf.popAtRisk,
         rawBaseline: baseline.popAtRisk,
         rawWhatIf: whatIf.popAtRisk,
         delta: whatIf.popAtRisk - baseline.popAtRisk,
@@ -195,7 +195,7 @@ export default function ScenarioAnalysisPage() {
       },
       {
         metric: "Hazard Area",
-        unit: "km²",
+        unit: "toy area units",
         Baseline: baseline.hazardArea,
         WhatIf: whatIf.hazardArea,
         rawBaseline: baseline.hazardArea,
@@ -205,7 +205,7 @@ export default function ScenarioAnalysisPage() {
       },
       {
         metric: "Cutoff Routes",
-        unit: "corridors",
+        unit: "toy units",
         Baseline: baseline.roadCutoffs,
         WhatIf: whatIf.roadCutoffs,
         rawBaseline: baseline.roadCutoffs,
@@ -215,7 +215,7 @@ export default function ScenarioAnalysisPage() {
       },
       {
         metric: "Shelter Load",
-        unit: "% occupied",
+        unit: "illustrative points",
         Baseline: baseline.shelterLoad,
         WhatIf: whatIf.shelterLoad,
         rawBaseline: baseline.shelterLoad,
@@ -225,7 +225,7 @@ export default function ScenarioAnalysisPage() {
       },
       {
         metric: "Reloc. Index",
-        unit: "score 0-100",
+        unit: "toy score",
         Baseline: baseline.relocationIndex,
         WhatIf: whatIf.relocationIndex,
         rawBaseline: baseline.relocationIndex,
@@ -241,28 +241,28 @@ export default function ScenarioAnalysisPage() {
     return [
       {
         time: "T+6H",
-        Baseline: Math.round((baseline.popAtRisk * 0.72) / 1000),
-        WhatIf: Math.round((whatIf.popAtRisk * 0.68) / 1000),
+        Baseline: Math.round(baseline.popAtRisk * 0.72),
+        WhatIf: Math.round(whatIf.popAtRisk * 0.68),
       },
       {
         time: "T+12H",
-        Baseline: Math.round((baseline.popAtRisk * 0.85) / 1000),
-        WhatIf: Math.round((whatIf.popAtRisk * 0.84) / 1000),
+        Baseline: Math.round(baseline.popAtRisk * 0.85),
+        WhatIf: Math.round(whatIf.popAtRisk * 0.84),
       },
       {
         time: "T+24H",
-        Baseline: Math.round(baseline.popAtRisk / 1000),
-        WhatIf: Math.round(whatIf.popAtRisk / 1000),
+        Baseline: baseline.popAtRisk,
+        WhatIf: whatIf.popAtRisk,
       },
       {
         time: "T+48H",
-        Baseline: Math.round((baseline.popAtRisk * 1.15) / 1000),
-        WhatIf: Math.round((whatIf.popAtRisk * 1.34) / 1000),
+        Baseline: Math.round(baseline.popAtRisk * 1.15),
+        WhatIf: Math.round(whatIf.popAtRisk * 1.34),
       },
       {
         time: "T+72H",
-        Baseline: Math.round((baseline.popAtRisk * 1.25) / 1000),
-        WhatIf: Math.round((whatIf.popAtRisk * 1.62) / 1000),
+        Baseline: Math.round(baseline.popAtRisk * 1.25),
+        WhatIf: Math.round(whatIf.popAtRisk * 1.62),
       },
     ];
   }, [baseline, whatIf]);
@@ -280,13 +280,13 @@ export default function ScenarioAnalysisPage() {
               </h1>
             </div>
             <p className="text-xs text-isie-text-secondary">
-              Simulate extreme weather anomalies, dam release surges, road cuts, and shelter carrying capacity collapses.
+              Synthetic tabletop controls and toy arithmetic only. Not a forecast, validated model, impact estimate, or operational recommendation.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <TacticalBadge variant="cyan" size="sm" pulse>
-              STOCHASTIC PERMUTATION READY
+              SIMULATION ONLY // NO CONFIDENCE ASSESSED
             </TacticalBadge>
           </div>
         </div>
@@ -306,14 +306,14 @@ export default function ScenarioAnalysisPage() {
                 Scenario A
               </span>
               <TacticalBadge variant="cyan" size="sm">
-                FLASH FLOOD
+                HYPOTHETICAL
               </TacticalBadge>
             </div>
             <h3 className="font-mono text-sm font-semibold text-white mb-1">
-              Monsoon Cloudburst + Dam Spillway Surcharge
+              Hypothetical rainfall input
             </h3>
             <p className="text-[11px] text-isie-text-dim">
-              Extreme rainfall over saturated catchment with emergency dam release downstream.
+              Fictional slider values; no real catchment or dam data is loaded.
             </p>
           </div>
 
@@ -330,14 +330,14 @@ export default function ScenarioAnalysisPage() {
                 Scenario B
               </span>
               <TacticalBadge variant="orange" size="sm">
-                LANDSLIDE
+                HYPOTHETICAL
               </TacticalBadge>
             </div>
             <h3 className="font-mono text-sm font-semibold text-white mb-1">
-              Slope Failure & Transport Corridor Severance
+              Hypothetical route disruption input
             </h3>
             <p className="text-[11px] text-isie-text-dim">
-              Cascading highway cutoffs isolating high-vulnerability hill habitations.
+              Fictional slider values; no routes or exposed communities are loaded.
             </p>
           </div>
 
@@ -354,14 +354,14 @@ export default function ScenarioAnalysisPage() {
                 Scenario C
               </span>
               <TacticalBadge variant="muted" size="sm">
-                CYCLONE SURGE
+                HYPOTHETICAL
               </TacticalBadge>
             </div>
             <h3 className="font-mono text-sm font-semibold text-white mb-1">
-              Storm Surge & Coastal Inundation Breach
+              Hypothetical surge input
             </h3>
             <p className="text-[11px] text-isie-text-dim">
-              Saline intrusion and complete shelter capacity exhaustion along low-lying coastlines.
+              Fictional slider values; no coastal or shelter observations are loaded.
             </p>
           </div>
         </div>
@@ -467,11 +467,11 @@ export default function ScenarioAnalysisPage() {
                       Simulation Outcome & Impact Variance Analysis
                     </span>
                     <TacticalBadge variant="critical" size="sm" pulse>
-                      ACTIVE PERMUTATION
+                      ILLUSTRATIVE ARITHMETIC // NOT PREDICTIVE
                     </TacticalBadge>
                   </div>
                   <p className="text-[11px] text-isie-text-dim mt-0.5 font-mono">
-                    Baseline Operations vs. &apos;What-If&apos; Surge Permutation ({horizon} Horizon)
+                    Toy Baseline vs. &apos;What-If&apos; Calculation ({horizon} Exercise Horizon)
                   </p>
                 </div>
 
@@ -517,7 +517,7 @@ export default function ScenarioAnalysisPage() {
                       <div className="text-base font-bold text-white leading-tight">
                         {d.WhatIf}
                         <span className="text-[10px] font-normal text-isie-text-dim ml-0.5">
-                          {d.unit === "% occupied" ? "%" : d.unit === "k people" ? "k" : ""}
+                          {d.unit === "illustrative points" ? " pts" : ""}
                         </span>
                       </div>
                       <span className="text-[10px] text-amber-400 font-semibold shrink-0">
@@ -638,7 +638,7 @@ export default function ScenarioAnalysisPage() {
                       <Area
                         type="monotone"
                         dataKey="Baseline"
-                        name="Baseline Population At Risk (k)"
+                        name="Baseline Toy Exercise Input"
                         stroke="#38bdf8"
                         strokeWidth={2}
                         fillOpacity={1}
@@ -647,7 +647,7 @@ export default function ScenarioAnalysisPage() {
                       <Area
                         type="monotone"
                         dataKey="WhatIf"
-                        name="What-If Population Displaced (k)"
+                        name="What-If Toy Calculation"
                         stroke="#ff7a18"
                         strokeWidth={2.5}
                         fillOpacity={1}
@@ -667,16 +667,16 @@ export default function ScenarioAnalysisPage() {
                   DIFFERENTIAL IMPACT:
                 </span>
                 <span className="text-red-400">
-                  +{(whatIf.popAtRisk - baseline.popAtRisk).toLocaleString()} DISPLACED
+                  +{(whatIf.popAtRisk - baseline.popAtRisk).toLocaleString()} TOY UNITS
                 </span>
                 <span className="text-white/20">|</span>
                 <span className="text-amber-400">
-                  +{(whatIf.hazardArea - baseline.hazardArea).toFixed(1)} KM² EXPANSION
+                  +{(whatIf.hazardArea - baseline.hazardArea).toFixed(1)} ILLUSTRATIVE AREA UNITS
                 </span>
               </div>
 
               <div className="flex items-center gap-2 text-[11px] text-isie-text-dim">
-                <span>STOCHASTIC CONFIDENCE: 92.4%</span>
+                <span>CONFIDENCE: NOT ASSESSED // MODEL NOT VALIDATED</span>
                 <TacticalBadge variant="warning" size="sm">
                   HIGH SEVERITY DELTA
                 </TacticalBadge>
@@ -738,23 +738,23 @@ const TrajectoryTooltip: React.FC<CustomTooltipProps> = ({ active, payload, labe
     return (
       <div className="p-3 bg-[#05070b]/95 border border-white/20 rounded-xs shadow-2xl font-mono text-xs space-y-1.5 backdrop-blur-md min-w-[190px]">
         <div className="flex items-center justify-between border-b border-white/10 pb-1">
-          <span className="font-bold text-white uppercase">{label} PROJECTION</span>
-          <span className="text-[10px] text-isie-text-dim">POPULATION (K)</span>
+          <span className="font-bold text-white uppercase">{label} TOY CALCULATION</span>
+          <span className="text-[10px] text-isie-text-dim">TOY EXERCISE UNITS</span>
         </div>
 
         <div className="flex items-center justify-between text-sky-300">
           <span>Baseline:</span>
-          <span className="font-bold">{baselineVal}k</span>
+          <span className="font-bold">{baselineVal}</span>
         </div>
 
         <div className="flex items-center justify-between text-amber-400">
           <span>What-If:</span>
-          <span className="font-bold">{whatIfVal}k</span>
+          <span className="font-bold">{whatIfVal}</span>
         </div>
 
         <div className="pt-1 border-t border-white/10 flex items-center justify-between text-red-400 font-bold">
-          <span>Surge Delta:</span>
-          <span>+{diff > 0 ? diff : 0}k people</span>
+          <span>Illustrative difference:</span>
+          <span>+{diff > 0 ? diff : 0} toy units</span>
         </div>
       </div>
     );

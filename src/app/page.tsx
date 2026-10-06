@@ -39,7 +39,7 @@ export default function LandingPage() {
         <div className="inline-flex flex-wrap items-center justify-center gap-2 px-3 py-1.5 bg-white/[0.03] border border-white/10 rounded-sm mb-6 font-mono text-[11px] sm:text-xs text-isie-text-secondary max-w-full">
           <span className="w-2 h-2 rounded-full bg-isie-primary animate-ping shrink-0" />
           <span className="tracking-widest uppercase truncate">
-            STRATEGIC CRISIS & RELOCATION DECISION SUPPORT
+            NON-OPERATIONAL DISASTER-MANAGEMENT PROTOTYPE
           </span>
         </div>
 
@@ -47,7 +47,7 @@ export default function LandingPage() {
         <h1 className="font-mono text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold uppercase tracking-tight text-white max-w-4xl leading-[1.1] mb-6">
           SPATIAL INTELLIGENCE &{" "}
           <span className="bg-gradient-to-r from-isie-primary via-orange-400 to-amber-200 bg-clip-text text-transparent">
-            CRISIS DECISION
+            PROTOTYPE ONLY
           </span>{" "}
           SUPPORT
         </h1>
@@ -71,7 +71,7 @@ export default function LandingPage() {
 
         {/* Short Mission Concept */}
         <p className="text-sm sm:text-base md:text-lg text-isie-text-secondary max-w-3xl leading-relaxed mb-10 font-normal">
-          An AI-powered multi-level decision intelligence platform that transforms fragmented satellite, hydrological, weather, and demographic data into continuously updated hazard red zones, carrying capacity assessments, and prioritized relocation intelligence.
+          Interactive interface prototype for tabletop exploration only. No satellite, hydrology, weather, demographic, hazard, capacity, route, or live incident data is connected. Analysis and response outputs are unavailable or illustrative and must not be used for real-world decisions.
         </p>
 
         {/* Primary Action Group */}
@@ -89,14 +89,14 @@ export default function LandingPage() {
                 <Layers className="w-4 h-4 text-isie-text-muted group-hover:text-isie-primary transition-colors shrink-0" />
               </div>
               <h3 className="font-mono text-sm font-bold text-white uppercase tracking-wider mb-2">
-                Hazard Red Zones
+                Hazard Layers (Unavailable)
               </h3>
               <p className="text-xs text-isie-text-secondary leading-relaxed mb-3">
-                Fuses Satellite SAR + Doppler Radar + Elevation Models to delineate dynamic hazard boundaries.
+                No verified hazard observations or satellite/radar feeds are connected. Operational layers are unavailable.
               </p>
             </div>
             <div className="font-mono text-[10px] text-isie-text-dim uppercase tracking-wider pt-2 border-t border-white/5">
-              OUTPUT: RED | WARNING | SAFE
+              OUTPUT: NOT ASSESSED
             </div>
           </div>
 
@@ -113,11 +113,11 @@ export default function LandingPage() {
                 Carrying Capacity
               </h3>
               <p className="text-xs text-isie-text-secondary leading-relaxed mb-3">
-                Calculates population exposure, hospital beds, potable water reserves, and road severance risk.
+                No verified population, facility capacity, supply, or route measurements are connected.
               </p>
             </div>
             <div className="font-mono text-[10px] text-isie-text-dim uppercase tracking-wider pt-2 border-t border-white/5">
-              OUTPUT: SAFE | WARNING | CRITICAL
+              OUTPUT: NOT ASSESSED
             </div>
           </div>
 
@@ -134,11 +134,11 @@ export default function LandingPage() {
                 Relocation Priority
               </h3>
               <p className="text-xs text-isie-text-secondary leading-relaxed mb-3">
-                Prioritizes habitations using hazard severity, vulnerability metrics, and accessible shelter capacity.
+                No validated relocation ranking or evacuation recommendation is generated.
               </p>
             </div>
             <div className="font-mono text-[10px] text-isie-text-dim uppercase tracking-wider pt-2 border-t border-white/5">
-              OUTPUT: RELOCATION INDEX (0-100)
+              OUTPUT: NOT ASSESSED
             </div>
           </div>
 
@@ -155,11 +155,11 @@ export default function LandingPage() {
                 What-If Stress Testing
               </h3>
               <p className="text-xs text-isie-text-secondary leading-relaxed mb-3">
-                Runs scenario permutations across dam releases, rainfall anomalies, and route severances.
+                Toy arithmetic only, using explicitly hypothetical inputs; not predictive or scientifically validated.
               </p>
             </div>
             <div className="font-mono text-[10px] text-isie-text-dim uppercase tracking-wider pt-2 border-t border-white/5">
-              OUTPUT: CASCADE FAILURE SIMULATION
+              OUTPUT: ILLUSTRATIVE EXERCISE ONLY
             </div>
           </div>
         </div>

@@ -6,10 +6,11 @@ export interface ExportPdfOptions {
   officerRole?: string;
   organization?: string;
   callsign?: string;
+  dataClassification?: string;
 }
 
 /**
- * Generates and downloads an operational PDF summary report for an incident.
+ * Generates and downloads a classified PDF summary for an incident.
  */
 export function exportIncidentReportPdf(
   incident: IntelligenceEvent,
@@ -51,7 +52,11 @@ export function exportIncidentReportPdf(
     doc.setFont("courier", "bold");
     doc.setFontSize(8);
     doc.setTextColor(248, 113, 113); // red-400
-    doc.text("TACTICAL CLASSIFICATION: RESTRICTED // OPERATIONAL CRISIS BRIEFING", margin, 14);
+    doc.text(
+      options?.dataClassification || "UNVERIFIED DATA // NOT FOR OPERATIONAL USE",
+      margin,
+      14
+    );
 
     const dateStr = new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC";
     doc.setFont("courier", "normal");
@@ -70,7 +75,7 @@ export function exportIncidentReportPdf(
     doc.setFont("courier", "bold");
     doc.setFontSize(10);
     doc.setTextColor(234, 88, 12); // orange-600
-    doc.text("NATIONAL DISASTER & CRISIS SITUATION SUMMARY REPORT", margin, y);
+    doc.text("DISASTER SITUATION SUMMARY // NOT AN OPERATIONAL ORDER", margin, y);
 
     y += 2;
     doc.setDrawColor(234, 88, 12);
@@ -125,7 +130,7 @@ export function exportIncidentReportPdf(
     doc.setFont("courier", "normal");
     doc.setFontSize(8.5);
     doc.setTextColor(71, 85, 105);
-    const statusText = `STATUS: ${incident.status || "ACTIVE"}  |  CATEGORY: ${incident.category}  |  TIME: ${incident.timestamp}`;
+    const statusText = `STATUS: ${incident.status || "UNAVAILABLE"}  |  CATEGORY: ${incident.category || "UNAVAILABLE"}  |  TIME: ${incident.timestamp || "UNAVAILABLE"}`;
     doc.text(statusText, margin + 4, y + 18.5);
 
     y += 27;
@@ -137,22 +142,28 @@ export function exportIncidentReportPdf(
     const metrics = [
       {
         label: "POPULATION AT RISK",
-        value: Number(incident.populationAtRisk || 0).toLocaleString(),
+        value: incident.populationAtRisk === undefined
+          ? "UNAVAILABLE"
+          : incident.populationAtRisk.toLocaleString(),
         color: [220, 38, 38], // red-600
       },
       {
         label: "RELOCATION INDEX",
-        value: `${incident.relocationScore || 75} / 100`,
+        value: incident.relocationScore === undefined
+          ? "UNAVAILABLE"
+          : `${incident.relocationScore} / 100`,
         color: [234, 88, 12], // orange-600
       },
       {
         label: "CARRYING CAPACITY",
-        value: incident.carryingCapacityStatus || "CRITICAL",
+        value: incident.carryingCapacityStatus || "UNAVAILABLE",
         color: [180, 83, 9], // amber-700
       },
       {
         label: "EXPOSED HABITATIONS",
-        value: `${incident.affectedHabitationsCount || Math.max(1, Math.round((incident.populationAtRisk || 0) / 3000))} HAMLETS`,
+        value: incident.affectedHabitationsCount === undefined
+          ? "UNAVAILABLE"
+          : `${incident.affectedHabitationsCount}`,
         color: [15, 23, 42], // slate-900
       },
     ];
@@ -190,7 +201,7 @@ export function exportIncidentReportPdf(
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(30, 41, 59); // slate-800
-    const summaryText = incident.summary || "No extended situational assessment provided for this event.";
+    const summaryText = incident.summary || "UNAVAILABLE — no situation summary was provided.";
     const splitSummary = doc.splitTextToSize(summaryText, contentWidth - 4);
     doc.text(splitSummary, margin + 2, y);
     y += splitSummary.length * 4.2 + 4;
@@ -207,12 +218,12 @@ export function exportIncidentReportPdf(
 
     const geoRows = [
       ["Operational Target", incident.locationName],
-      ["District / Sector", `${incident.district || "Sector Alpha"}, ${incident.state || "National Division"}`],
+      ["District / State", `${incident.district || "UNAVAILABLE"}, ${incident.state || "UNAVAILABLE"}`],
       ["Coordinates (WGS-84)", `${incident.coordinates.lat.toFixed(5)}°N, ${incident.coordinates.lng.toFixed(5)}°E`],
-      ["Elevation Datum", incident.coordinates.elevationMeters ? `${incident.coordinates.elevationMeters} meters ASL` : "Calculated from SRTM 30m DEM"],
-      ["Surface Area Affected", incident.affectedAreaKm2 ? `${incident.affectedAreaKm2} km²` : "Sector perimeter active"],
-      ["Infrastructure Criticality", incident.infrastructureImpact || "Access corridors and river bridges monitored for severance"],
-      ["Critical Facilities Hit", incident.criticalFacilitiesAffected ? `${incident.criticalFacilitiesAffected} vital installations reported` : "Nil direct infrastructure strikes verified"],
+      ["Elevation", incident.coordinates.elevationMeters !== undefined ? `${incident.coordinates.elevationMeters} meters` : "UNAVAILABLE"],
+      ["Surface Area Affected", incident.affectedAreaKm2 !== undefined ? `${incident.affectedAreaKm2} km²` : "UNAVAILABLE"],
+      ["Infrastructure Impact", incident.infrastructureImpact || "UNAVAILABLE"],
+      ["Critical Facilities Affected", incident.criticalFacilitiesAffected !== undefined ? `${incident.criticalFacilitiesAffected}` : "UNAVAILABLE"],
     ];
 
     doc.setFontSize(8);
@@ -244,17 +255,17 @@ export function exportIncidentReportPdf(
     doc.setFont("courier", "bold");
     doc.setFontSize(8);
     doc.setTextColor(255, 255, 255);
-    doc.text("3.0 MULTI-AGENCY FUSION & SENSOR CHAIN OF CUSTODY", margin + 3, y + 3.8);
+    doc.text("3.0 RECORDED DATA SOURCES AND VERIFICATION", margin + 3, y + 3.8);
     y += 7.5;
 
     const sources = incident.sourceAgencies && incident.sourceAgencies.length > 0
       ? incident.sourceAgencies.join(", ")
-      : incident.source || "ISRO NDEM, IMD Radar, CWC Gauging Network";
+      : incident.source || "UNAVAILABLE — NO SOURCE RECORDED";
 
     doc.setFont("courier", "bold");
     doc.setFontSize(8);
     doc.setTextColor(71, 85, 105);
-    doc.text("AUTHORITATIVE AGENCIES:", margin + 3, y);
+    doc.text("RECORDED SOURCES:", margin + 3, y);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(15, 23, 42);
     doc.text(sources, margin + 48, y);
@@ -265,7 +276,7 @@ export function exportIncidentReportPdf(
     doc.text("VERIFICATION LEVEL:", margin + 3, y);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(16, 149, 193);
-    doc.text(incident.verificationStatus || "VERIFIED_BY_AUTHORITY", margin + 48, y);
+    doc.text(incident.verificationStatus || "UNVERIFIED", margin + 48, y);
     y += 5.5;
 
     doc.setFont("courier", "bold");
@@ -273,40 +284,45 @@ export function exportIncidentReportPdf(
     doc.text("CONFIDENCE SCORE:", margin + 3, y);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(22, 101, 52); // green-800
-    doc.text(`${((incident.confidenceScore || 0.92) * 100).toFixed(0)}% (Cross-Sensor High Precision)`, margin + 48, y);
+    doc.text(
+      incident.confidenceScore === undefined
+        ? "UNAVAILABLE — NO CONFIDENCE DATA"
+        : `${(incident.confidenceScore * 100).toFixed(0)}% (recorded value; not independently validated)`,
+      margin + 48,
+      y
+    );
     y += 8;
 
-    // 8. OFFICER SIGN-OFF & OPERATIONAL AUTHENTICATION
+    // 8. Attribution (does not imply approval or dispatch)
     checkPageBreak(32);
     doc.setFillColor(241, 245, 249);
     doc.setDrawColor(203, 213, 225);
     doc.setLineWidth(0.3);
     doc.roundedRect(margin, y, contentWidth, 20, 1, 1, "FD");
 
-    const officer = options?.officerName || incident.createdByName || "Strategic Operations Director";
-    const role = options?.officerRole || "Tactical Command / Sector Lead";
-    const org = options?.organization || "National Crisis Command (ISIE)";
-    const callsign = options?.callsign || "COMMAND-01";
+    const officer = options?.officerName || incident.createdByName || "NOT PROVIDED";
+    const role = options?.officerRole || "NOT PROVIDED";
+    const org = options?.organization || "NOT PROVIDED";
+    const callsign = options?.callsign || "NOT PROVIDED";
 
     doc.setFont("courier", "bold");
     doc.setFontSize(8);
     doc.setTextColor(15, 23, 42);
-    doc.text("DISPATCHED BY:", margin + 4, y + 5);
+    doc.text("RECORDED BY:", margin + 4, y + 5);
     doc.setFont("helvetica", "normal");
     doc.text(`${officer} [${callsign}]`, margin + 36, y + 5);
 
     doc.setFont("courier", "bold");
-    doc.text("AUTHORITY / UNIT:", margin + 4, y + 10);
+    doc.text("ROLE / ORGANIZATION:", margin + 4, y + 10);
     doc.setFont("helvetica", "normal");
     doc.text(`${role} // ${org}`, margin + 36, y + 10);
 
     doc.setFont("courier", "bold");
-    doc.text("CHECKSUM SHA-256:", margin + 4, y + 15);
+    doc.text("INTEGRITY CHECK:", margin + 4, y + 15);
     doc.setFont("courier", "normal");
     doc.setFontSize(7);
     doc.setTextColor(100, 116, 139);
-    const mockHash = `ISIE-${(incident.id || "INC").slice(0, 8)}-${Math.random().toString(36).substring(2, 10).toUpperCase()}-VERIFIED`;
-    doc.text(mockHash, margin + 36, y + 15);
+    doc.text("NOT AVAILABLE — NO CRYPTOGRAPHIC SEAL", margin + 36, y + 15);
 
     y += 24;
 
@@ -318,7 +334,7 @@ export function exportIncidentReportPdf(
       doc.setFontSize(7);
       doc.setTextColor(148, 163, 184);
       doc.text(
-        "ISIE CRISIS MANAGEMENT PLATFORM — OFFICIAL SITUATION SUMMARY — CONFIDENTIAL DISPATCH",
+        "ISIE PREVIEW REPORT — NOT FOR OPERATIONAL USE — NOT AN EVACUATION ORDER",
         margin,
         pageHeight - 11
       );

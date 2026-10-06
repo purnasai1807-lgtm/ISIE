@@ -1,106 +1,105 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper function to check if user is authenticated
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    // Helper function to verify user ownership
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Role-Based Access Control helper
-    function getUserRole() {
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
-        : 'VIEWER';
+    // Authorization comes only from trusted Firebase custom claims, never a profile document.
+    function hasRole(role) {
+      return isAuthenticated()
+        && ('role' in request.auth.token)
+        && request.auth.token.role == role;
     }
 
     function isAdmin() {
-      return isAuthenticated() && getUserRole() == 'ADMIN';
+      return hasRole('ADMIN');
     }
 
     function isOperator() {
-      return isAuthenticated() && (getUserRole() == 'OPERATOR' || getUserRole() == 'ADMIN');
+      return hasRole('OPERATOR') || isAdmin();
     }
 
     function isAnalyst() {
-      return isAuthenticated() && (getUserRole() == 'ANALYST' || getUserRole() == 'OPERATOR' || getUserRole() == 'ADMIN');
+      return hasRole('ANALYST') || isOperator();
     }
 
-    // User profile document & private tactical logs
     match /users/{userId} {
-      allow read, write: if isOwner(userId) || isAdmin();
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId)
+        && request.resource.data.uid == userId
+        && request.resource.data.role == 'VIEWER'
+        && request.resource.data.keys().hasOnly([
+          'uid', 'email', 'displayName', 'photoURL', 'role', 'organization',
+          'clearance', 'callsign', 'createdAt', 'updatedAt', 'lastLoginAt',
+          'preferences'
+        ]);
+      allow update: if isAdmin()
+        || (isOwner(userId)
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.email == resource.data.email
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'displayName', 'photoURL', 'organization', 'clearance', 'callsign',
+            'updatedAt', 'lastLoginAt', 'preferences'
+          ]));
+      allow delete: if isAdmin();
 
-      // Subcollection for tactical logs, voice transcriptions, and geo-grounded reports
       match /tactical_logs/{logId} {
-        allow read, write: if isOwner(userId) || isAdmin();
+        allow read: if isOwner(userId) || isAdmin();
+        // Evidence and field logs remain immutable until trusted server-side audit storage exists.
+        allow create, update, delete: if false;
       }
     }
 
-    // Operational Incidents collection (Single Canonical Source of Truth)
+    // Operational writes are intentionally denied until a trusted backend validates
+    // provenance and records immutable audit events. Reads exclude VIEWER accounts
+    // because these records may contain sensitive incident locations.
     match /incidents/{incidentId} {
-      allow read: if isAuthenticated();
-      allow create: if isOperator()
-        && request.resource.data.title is string
-        && request.resource.data.severity is string
-        && request.resource.data.coordinates.lat is number
-        && request.resource.data.coordinates.lng is number;
-      allow update: if isOperator() || isAnalyst();
-      allow delete: if isAdmin();
+      allow read: if isAnalyst();
+      allow create, update, delete: if false;
     }
 
-    // Tactical Alerts collection (correlated via relatedEventId)
     match /alerts/{alertId} {
-      allow read: if isAuthenticated();
-      allow write: if isOperator();
+      allow read: if isAnalyst();
+      allow create, update, delete: if false;
     }
 
-    // Hazard Zones collection
     match /hazard_zones/{zoneId} {
-      allow read: if isAuthenticated();
-      allow write: if isOperator();
+      allow read: if isAnalyst();
+      allow create, update, delete: if false;
     }
 
-    // Carrying Capacity Assessments
     match /carrying_capacity/{zoneId} {
-      allow read: if isAuthenticated();
-      allow write: if isOperator();
+      allow read: if isAnalyst();
+      allow create, update, delete: if false;
     }
 
-    // Relocation Plans
-    match /relocation_plans/{zoneId} {
-      allow read: if isAuthenticated();
-      allow write: if isOperator();
+    match /relocation_plans/{planId} {
+      allow read: if isAnalyst();
+      allow create, update, delete: if false;
     }
 
-    // Evidence and Satellite Ingestions
     match /evidence/{evidenceId} {
-      allow read: if isAuthenticated();
-      allow write: if isAnalyst();
+      allow read: if isAnalyst();
+      allow create, update, delete: if false;
     }
 
-    // Chronological Timelines (correlated via relatedZoneId)
     match /timelines/{timelineId} {
-      allow read: if isAuthenticated();
-      allow write: if isOperator();
+      allow read: if isAnalyst();
+      allow create, update, delete: if false;
     }
 
-    // Broadcast Notifications
     match /notifications/{notificationId} {
-      allow read: if isAuthenticated();
-      allow write: if isOperator();
+      allow read: if isAnalyst();
+      allow create, update, delete: if false;
     }
 
-    // Connection testing endpoint (read-only verification for boot connection handshake)
-    match /test/{docId} {
-      allow read: if true;
-      allow write: if false;
-    }
-
-    // Catch-all safety default deny
     match /{document=**} {
       allow read, write: if false;
     }

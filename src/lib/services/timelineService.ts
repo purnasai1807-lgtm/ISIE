@@ -7,19 +7,21 @@ import { TimelineEvent } from "../types/isie";
 import { DEMO_TIMELINE_EVENTS } from "@/data/demo/timelines";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db, auth, handleFirestoreError, OperationType } from "@/lib/firebase/client";
+import { hasFreshVerifiedProvenance } from "@/lib/utils/dataQuality";
 
 export interface ITimelineService {
   getTimelineEvents(zoneId?: string, isDemoMode?: boolean): Promise<TimelineEvent[]>;
 }
 
 export class TimelineService implements ITimelineService {
-  async getTimelineEvents(zoneId?: string, isDemoMode: boolean = true): Promise<TimelineEvent[]> {
-    if (isDemoMode || !auth.currentUser) {
+  async getTimelineEvents(zoneId?: string, isDemoMode: boolean = false): Promise<TimelineEvent[]> {
+    if (isDemoMode) {
       if (!zoneId || zoneId === "ALL") {
         return [...DEMO_TIMELINE_EVENTS];
       }
       return DEMO_TIMELINE_EVENTS.filter((e) => e.relatedZoneId === zoneId);
     }
+    if (!auth.currentUser) return [];
 
     try {
       const col = collection(db, "timelines");
@@ -31,13 +33,12 @@ export class TimelineService implements ITimelineService {
       if (snapshot.empty) {
         return [];
       }
-      return snapshot.docs.map((d) => ({
-        id: d.id,
-        ...(d.data() as Omit<TimelineEvent, "id">),
-      }));
+      return snapshot.docs
+        .filter((d) => hasFreshVerifiedProvenance(d.data()))
+        .map((d) => ({ id: d.id, ...(d.data() as Omit<TimelineEvent, "id">) }));
     } catch (err) {
       handleFirestoreError(err, OperationType.LIST, "timelines");
-      return [];
+      throw err;
     }
   }
 }

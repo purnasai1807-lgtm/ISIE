@@ -104,6 +104,12 @@ export const NAVIGATION_SECTIONS: NavSection[] = [
     ],
   },
   {
+    title: "STARTUP",
+    items: [
+      { id: "startup", label: "Startup Capability Center", href: "/startup", iconName: "ShieldCheck", description: "Data providers, dispatch controls, cloud readiness and commercial integrations" },
+    ],
+  },
+  {
     title: "SYSTEM",
     items: [
       {

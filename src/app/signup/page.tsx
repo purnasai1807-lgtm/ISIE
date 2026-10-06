@@ -15,22 +15,14 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPass, setConfirmPass] = useState("");
-  const [role, setRole] = useState("Command / Decision Maker");
+  const [role, setRole] = useState("VIEWER");
   const [organization, setOrganization] = useState("");
   const [country, setCountry] = useState("India");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [successMessage, setSuccessMessage] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const roles = [
-    "Command / Decision Maker",
-    "Analyst",
-    "Disaster Management",
-    "Defence / Security",
-    "Government / Administration",
-    "Researcher",
-    "Observer",
-  ];
+  const roles = ["VIEWER"];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,7 +79,7 @@ export default function SignUpPage() {
             <div>
               <div className="font-bold">Prototype account created successfully.</div>
               <div className="text-[11px] text-emerald-400/80">
-                Granting tactical clearance and redirecting to Command Dashboard...
+                Assigning the default VIEWER role and redirecting to the preview...
               </div>
             </div>
           </div>
@@ -163,11 +155,11 @@ export default function SignUpPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-isie-text-secondary uppercase tracking-wider">
-                Operational Role
+                Initial Role
               </label>
               <select
                 value={role}
-                onChange={(e) => setRole(e.target.value)}
+                disabled
                 className="w-full bg-isie-panel-light border border-white/10 p-2.5 text-white outline-none rounded-xs"
               >
                 {roles.map((r) => (
@@ -176,6 +168,7 @@ export default function SignUpPage() {
                   </option>
                 ))}
               </select>
+              <p className="text-[10px] text-isie-text-dim">Elevated roles require trusted administrator provisioning.</p>
             </div>
 
             <div className="space-y-1.5">

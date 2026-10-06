@@ -55,11 +55,11 @@ export default function GlobePage() {
 
           <div className="flex items-center gap-3">
             <TacticalBadge variant={isDemoMode ? "cyan" : "orange"} size="sm">
-              {isDemoMode ? "DEMO SIMULATION" : "OPERATIONAL FIRESTORE"} // {incidents.length} NODES
+              {isDemoMode ? "DEMO SIMULATION RECORDS" : "VERIFICATION UNAVAILABLE"} // {isDemoMode ? incidents.length : "NO FEED"}
             </TacticalBadge>
             <div className="hidden sm:flex items-center gap-1.5 font-mono text-xs text-isie-text-muted">
               <Satellite className="w-3.5 h-3.5 text-amber-400" />
-              <span>ORBITAL SYNC: NOMINAL</span>
+              <span>STATIC GLOBE // NO ORBITAL FEED</span>
             </div>
           </div>
         </div>

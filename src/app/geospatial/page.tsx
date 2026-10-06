@@ -96,7 +96,7 @@ export default function GeospatialIntelligencePage() {
               </TacticalBadge>
               <div className="hidden sm:flex items-center gap-1.5 font-mono text-xs text-isie-text-muted">
                 <Satellite className="w-3.5 h-3.5 text-amber-400" />
-                <span>SENTINEL-1 SAR: READY</span>
+                <span>REMOTE-SENSING PROVIDER: NOT CONNECTED</span>
               </div>
             </div>
           </div>
@@ -338,7 +338,7 @@ export default function GeospatialIntelligencePage() {
 
           {/* Bottom Satellite Telemetry Status */}
           <div className="p-3 border-t border-white/10 bg-isie-panel-light/20 text-[10px] font-mono text-isie-text-dim flex justify-between items-center">
-            <span>RASTER/VECTOR FUSION: ACTIVE</span>
+            <span>MAP OVERLAYS: LOCAL UI CONTROLS ONLY // NO DATA PROVIDERS CONNECTED</span>
             <span className="text-cyan-400">
               ACTIVE: {Object.values(activeLayers).filter(Boolean).length}/{DEFAULT_MAP_LAYERS.length}
             </span>

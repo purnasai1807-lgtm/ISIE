@@ -75,7 +75,7 @@ export default function SignInPage() {
         show: true,
         operatorName: isDemo
           ? "Operations Director (Trident Actual)"
-          : (email.split("@")[0].toUpperCase() || "Authorized Operator"),
+          : (email.split("@")[0].toUpperCase() || "Signed-in user"),
         isDemo,
       });
       setTimeout(() => {

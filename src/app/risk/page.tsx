@@ -39,10 +39,10 @@ export default function RiskImpactAnalysisPage() {
   const [selectedDomain, setSelectedDomain] = useState<"ALL" | "CAPACITY" | "RELOCATION">("ALL");
 
   useEffect(() => {
-    riskService.getHazardRedZones().then(setRedZones);
-    riskService.getCarryingCapacityAssessment().then(setCapacity);
-    riskService.getRelocationPriorities().then(setRelocations);
-  }, []);
+    riskService.getHazardRedZones(undefined, isDemoMode).then(setRedZones);
+    riskService.getCarryingCapacityAssessment(undefined, isDemoMode).then(setCapacity);
+    riskService.getRelocationPriorities(undefined, isDemoMode).then(setRelocations);
+  }, [isDemoMode]);
 
   useEffect(() => {
     const unsubscribe = incidentService.subscribeIncidents(isDemoMode, setIncidents);
@@ -51,18 +51,25 @@ export default function RiskImpactAnalysisPage() {
     };
   }, [isDemoMode]);
 
-  const totalExposedPop = redZones.reduce(
-    (acc, z) => acc + (z.classification === "RED_ZONE" ? z.populationExposed : 0),
-    0
-  );
-
+  const assessedZones = redZones.filter((zone) => zone.classification === "RED_ZONE");
   const totalHabitationsInRedZones = incidents
-    .filter((i) => i.hazardZoneLevel === "RED_ZONE")
-    .reduce((acc, curr) => acc + (curr.affectedHabitationsCount || 10), 0);
+    .filter((incident) => incident.hazardZoneLevel === "RED_ZONE")
+    .reduce((total, incident) => total + (incident.affectedHabitationsCount ?? 0), 0);
 
-  const maxRelocationScore = relocations.length > 0
-    ? Math.max(...relocations.map((r) => r.relocationPriorityScore))
-    : 94;
+  if (!isDemoMode) {
+    return (
+      <AppShell pageTitle="Risk & Impact Analysis // Data Unavailable">
+        <div className="flex-1 flex flex-col p-4 md:p-6 gap-6 max-w-7xl mx-auto w-full">
+          <EmptyState
+            icon="database"
+            title="No Verified Risk Assessment Available"
+            description="Risk, capacity, and relocation figures are withheld until fresh source measurements, verification provenance, and an integrated validated analysis backend are available. Missing: verified hazard observations, population exposure, shelter capacity, and current route status."
+            statusText="INSUFFICIENT VERIFIED DATA"
+          />
+        </div>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell pageTitle="Risk & Impact Analysis // Carrying Capacity & Vulnerability Assessment">
@@ -77,16 +84,16 @@ export default function RiskImpactAnalysisPage() {
               </h1>
             </div>
             <p className="text-xs text-isie-text-secondary">
-              Quantitative population exposure modeling, critical infrastructure deficits, and prioritized relocation triage.
+              Illustrative exercise fixtures only; no observed, verified, or decision-grade measures are available.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <TacticalBadge variant="cyan" size="sm">
-              ENGINE: PROBABILISTIC // LIVE
+              DEMO SIMULATION // NOT OPERATIONAL
             </TacticalBadge>
             <TacticalBadge variant="orange" size="sm">
-              {redZones.length} HAZARD SECTORS
+              {redZones.length} FICTIONAL EXERCISE ZONES
             </TacticalBadge>
           </div>
         </div>
@@ -95,14 +102,14 @@ export default function RiskImpactAnalysisPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono text-xs">
           <div className="p-4 bg-isie-panel border border-white/10 rounded-sm">
             <div className="flex items-center justify-between text-isie-text-muted mb-2">
-              <span className="text-[10px] tracking-wider uppercase">HABITATIONS IN RED ZONE</span>
+              <span className="text-[10px] tracking-wider uppercase">EXERCISE EXPOSURE INPUT</span>
               <ShieldAlert className="w-4 h-4 text-red-400" />
             </div>
             <div className="text-2xl font-bold text-white mb-1">
-              {totalHabitationsInRedZones || 76}
+              {assessedZones.length === 0 ? "NOT ASSESSED" : totalHabitationsInRedZones}
             </div>
             <div className="text-[10px] text-red-400 font-semibold">
-              ACUTE SURGE / GLOF EXPOSURE
+              SYNTHETIC INPUT ONLY // NOT DECISION-GRADE
             </div>
           </div>
 
@@ -112,10 +119,10 @@ export default function RiskImpactAnalysisPage() {
               <Users className="w-4 h-4 text-isie-cyan" />
             </div>
             <div className="text-2xl font-bold text-amber-300 mb-1">
-              {totalExposedPop.toLocaleString()}
+              NOT ASSESSED
             </div>
             <div className="text-[10px] text-isie-text-dim">
-              TIER-1 EXPOSURE PERIMETER
+              NO POPULATION SOURCE CONNECTED
             </div>
           </div>
 
@@ -125,10 +132,12 @@ export default function RiskImpactAnalysisPage() {
               <Building className="w-4 h-4 text-amber-400" />
             </div>
             <div className="text-2xl font-bold text-amber-400 mb-1">
-              {capacity?.populationExposure.capacityDeficitPercentage || 71.8}%
+              {capacity && capacity.populationExposure.capacityDeficitPercentage > 0
+                ? `${capacity.populationExposure.capacityDeficitPercentage}% (ILLUSTRATIVE)`
+                : "NOT ASSESSED"}
             </div>
             <div className="text-[10px] text-amber-400 font-semibold">
-              ACUTE CAPACITY DEFICIT
+              SIMULATED FIXTURE VALUE // UNVALIDATED
             </div>
           </div>
 
@@ -138,10 +147,10 @@ export default function RiskImpactAnalysisPage() {
               <AlertTriangle className="w-4 h-4 text-red-400" />
             </div>
             <div className="text-2xl font-bold text-isie-primary mb-1">
-              {maxRelocationScore} <span className="text-xs font-normal text-white/50">/ 100</span>
+              NOT ASSESSED
             </div>
             <div className="text-[10px] text-red-400 font-semibold">
-              TIER 1 EMERGENCY EVACUATION
+              NO VALIDATED INDEX // NO ORDERING
             </div>
           </div>
         </div>
@@ -176,14 +185,14 @@ export default function RiskImpactAnalysisPage() {
                 <div className="flex items-center justify-between pb-3 mb-4 border-b border-white/10">
                   <div>
                     <div className="font-mono text-sm font-bold uppercase tracking-wider text-white">
-                      Module 02 // Carrying Capacity Stress Matrix
+                      Module 02 // Illustrative Capacity Inputs
                     </div>
                     <div className="text-[11px] text-isie-text-dim">
-                      Shelter capacity, healthcare saturation, potable water & road severance
+                      Fictional exercise inputs only; none represent measured capacity or service status.
                     </div>
                   </div>
                   <TacticalBadge variant="critical" size="sm">
-                    CRITICAL SATURATION
+                    NOT ASSESSED
                   </TacticalBadge>
                 </div>
 
@@ -192,30 +201,30 @@ export default function RiskImpactAnalysisPage() {
                   <div>
                     <div className="flex justify-between text-isie-text-secondary mb-1">
                       <span>DISTRICT HOSPITAL BED OCCUPANCY</span>
-                      <span className="text-red-400 font-bold">88% (CRITICAL)</span>
+                      <span className="text-isie-text-dim font-bold">NOT ASSESSED</span>
                     </div>
                     <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full bg-red-500 rounded-full" style={{ width: "88%" }} />
+                      <div className="h-full bg-white/20 rounded-full" style={{ width: "0%" }} />
                     </div>
                   </div>
 
                   <div>
                     <div className="flex justify-between text-isie-text-secondary mb-1">
                       <span>CRITICAL ARTERIAL ROAD NETWORK</span>
-                      <span className="text-amber-400 font-bold">35% OPERATIONAL (65% SEVERED)</span>
+                      <span className="text-isie-text-dim font-bold">NOT ASSESSED</span>
                     </div>
                     <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full bg-amber-500 rounded-full" style={{ width: "35%" }} />
+                      <div className="h-full bg-white/20 rounded-full" style={{ width: "0%" }} />
                     </div>
                   </div>
 
                   <div>
                     <div className="flex justify-between text-isie-text-secondary mb-1">
                       <span>EMERGENCY RELIEF SHELTER LOAD</span>
-                      <span className="text-amber-400 font-bold">82% OCCUPIED</span>
+                      <span className="text-isie-text-dim font-bold">NOT ASSESSED</span>
                     </div>
                     <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full bg-orange-500 rounded-full" style={{ width: "82%" }} />
+                      <div className="h-full bg-white/20 rounded-full" style={{ width: "0%" }} />
                     </div>
                   </div>
 
@@ -223,20 +232,20 @@ export default function RiskImpactAnalysisPage() {
                     <div className="flex justify-between text-isie-text-secondary mb-1">
                       <span>POTABLE WATER BUFFER HORIZON</span>
                       <span className="text-sky-300 font-bold">
-                        {capacity?.resourceReserves.potableWaterHoursRemaining || 28} HRS REMAINING
+                        NOT ASSESSED
                       </span>
                     </div>
                     <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full bg-sky-400 rounded-full" style={{ width: "55%" }} />
+                      <div className="h-full bg-white/20 rounded-full" style={{ width: "0%" }} />
                     </div>
                   </div>
                 </div>
               </div>
 
               <div className="pt-3 border-t border-white/10 font-mono text-[10px] text-isie-text-dim flex justify-between items-center">
-                <span>RATIONS: {capacity?.resourceReserves.emergencyRationPacks.toLocaleString()} PACKS</span>
+                <span>RATIONS: NOT ASSESSED</span>
                 <Link href="/resources" className="text-isie-cyan hover:underline flex items-center gap-1 font-semibold">
-                  <span>DISPATCH LOGISTICS</span>
+                  <span>VIEW SIMULATED RESOURCES</span>
                   <ArrowRight className="w-3 h-3" />
                 </Link>
               </div>
@@ -253,11 +262,11 @@ export default function RiskImpactAnalysisPage() {
                       Module 03 // Relocation Priority Scoring
                     </div>
                     <div className="text-[11px] text-isie-text-dim">
-                      Objective relocation ranking derived from hazard severity & isolation risk
+                      No ranking computed: required hazard, population, shelter, and route measurements are unavailable.
                     </div>
                   </div>
                   <TacticalBadge variant="orange" size="sm">
-                    {relocations.length} PRIORITIZED
+                    NOT ASSESSED
                   </TacticalBadge>
                 </div>
 
@@ -270,23 +279,22 @@ export default function RiskImpactAnalysisPage() {
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <span className="px-1.5 py-0.5 bg-isie-primary/20 text-isie-primary border border-isie-primary/40 font-bold rounded-xs shrink-0">
-                            RANK #{reloc.priorityRank}
+                            NOT RANKED
                           </span>
                           <span className="font-bold text-white truncate">{reloc.zoneName}</span>
                         </div>
                         <span className="text-red-400 font-bold text-sm shrink-0">
-                          INDEX: {reloc.relocationPriorityScore}
+                          INDEX: NOT ASSESSED
                         </span>
                       </div>
 
                       <div className="flex flex-wrap items-center justify-between text-[11px] text-isie-text-dim gap-1">
-                        <span>EST. TRANSIT: {reloc.estimatedTransitTimeHours} HRS</span>
+                        <span>TRANSIT: NOT ASSESSED</span>
                         <span className="text-isie-cyan">HAVEN: {reloc.designatedShelters[0]?.name}</span>
                       </div>
 
                       <div className="text-[10px] text-amber-300">
-                        PRIMARY ROUTE: {reloc.evacuationRoutesIdentified[0]?.corridorName} (
-                        {reloc.evacuationRoutesIdentified[0]?.status})
+                        ROUTE: NOT ASSESSED — DO NOT USE FOR NAVIGATION
                       </div>
                     </div>
                   ))}
@@ -294,9 +302,9 @@ export default function RiskImpactAnalysisPage() {
               </div>
 
               <div className="pt-3 border-t border-white/10 font-mono text-[10px] text-isie-text-dim flex justify-between items-center">
-                <span>SECTORS QUEUED: {relocations.length}</span>
+                <span>EXERCISE FIXTURE ONLY // NO ROUTING</span>
                 <Link href="/geospatial" className="text-isie-primary hover:underline flex items-center gap-1 font-semibold">
-                  <span>VIEW EVACUATION MAP</span>
+                  <span>VIEW FICTIONAL MAP (NO ROUTING)</span>
                   <ArrowRight className="w-3 h-3" />
                 </Link>
               </div>

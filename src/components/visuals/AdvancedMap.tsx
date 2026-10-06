@@ -25,7 +25,6 @@ import {
   Info,
 } from "lucide-react";
 import { TacticalBadge } from "../ui/TacticalBadge";
-import { DEMO_INCIDENTS } from "@/data/demo/incidents";
 import { IntelligenceEvent } from "@/lib/types/isie";
 import {
   INDIAN_STATES,
@@ -40,14 +39,8 @@ import {
   CRITICAL_EVACUATION_CORRIDORS,
   ROAD_CUTOFF_CHOKEPOINTS,
   AUTHORITATIVE_HAZARD_ZONES,
-  CENTRAL_COMMAND_HQ,
 } from "@/lib/constants/indiaGeographicData";
-import { GoogleMap2DView } from "./GoogleMap2DView";
-import { isGoogleMapsConfigured } from "@/lib/services/googleMapsLoader";
-import { BasemapQuickToggle, BasemapMode } from "./BasemapQuickToggle";
-
-export const STREET_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
-export const SATELLITE_TILE_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+import { BasemapMode } from "./BasemapQuickToggle";
 
 export interface AdvancedMapProps {
   className?: string;
@@ -70,13 +63,11 @@ export const AdvancedMap: React.FC<AdvancedMapProps> = ({
   selectedIncidentId = null,
   onSelectIncident,
   incidents,
-  defaultToGoogleMaps = false,
   basemap: propBasemap,
-  onBasemapChange,
   activeLayers: propActiveLayers,
   layerOpacities: propLayerOpacities,
 }) => {
-  const activeIncidents = incidents !== undefined ? incidents : DEMO_INCIDENTS;
+  const activeIncidents = incidents ?? [];
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const layersGroupRef = useRef<Record<string, any>>({});
@@ -85,7 +76,6 @@ export const AdvancedMap: React.FC<AdvancedMapProps> = ({
   const [activeIncident, setActiveIncident] = useState<IntelligenceEvent | null>(null);
   const [mapStyle, setMapStyle] = useState<"TACTICAL" | "NATURAL">("TACTICAL");
   const [currentZoom, setCurrentZoom] = useState<number>(5.0);
-  const [useGoogleMaps, setUseGoogleMaps] = useState<boolean>(defaultToGoogleMaps);
   const [currentBasemap, setCurrentBasemap] = useState<BasemapMode>(propBasemap || "street");
 
   // Dynamically apply activeLayers and layerOpacities to Leaflet map layers
@@ -168,40 +158,19 @@ export const AdvancedMap: React.FC<AdvancedMapProps> = ({
   useEffect(() => {
     if (propBasemap && propBasemap !== currentBasemap) {
       setCurrentBasemap(propBasemap);
-      const tileLayer = layersGroupRef.current.baseMap;
-      if (tileLayer && typeof tileLayer.setUrl === "function") {
-        tileLayer.setUrl(propBasemap === "satellite" ? SATELLITE_TILE_URL : STREET_TILE_URL);
-      }
     }
   }, [propBasemap]);
-
-  const handleBasemapChange = (mode: BasemapMode) => {
-    setCurrentBasemap(mode);
-    onBasemapChange?.(mode);
-    const tileLayer = layersGroupRef.current.baseMap;
-    if (tileLayer && typeof tileLayer.setUrl === "function") {
-      tileLayer.setUrl(mode === "satellite" ? SATELLITE_TILE_URL : STREET_TILE_URL);
-    }
-  };
-
-  useEffect(() => {
-    if (!isGoogleMapsConfigured()) {
-      setUseGoogleMaps(false);
-    } else {
-      setUseGoogleMaps(defaultToGoogleMaps);
-    }
-  }, [defaultToGoogleMaps]);
 
   // Default Layer Toggles
   const [layerVisibility, setLayerVisibility] = useState({
     baseMap: true,
-    stateBoundaries: true,
-    rivers: true,
-    terrain: true,
-    hazardZones: true,
-    evacuationCorridors: true,
+    stateBoundaries: false,
+    rivers: false,
+    terrain: false,
+    hazardZones: false,
+    evacuationCorridors: false,
     incidents: true,
-    shelters: true,
+    shelters: false,
   });
 
   const updateZoomDependentLayers = useCallback((zoom: number, visibility = layerVisibility) => {
@@ -387,18 +356,8 @@ export const AdvancedMap: React.FC<AdvancedMapProps> = ({
 
       mapInstanceRef.current = map;
 
-      // --- 1. Authentic OpenStreetMap / Satellite Basemap ---
-      const initialTileUrl = currentBasemap === "satellite" ? SATELLITE_TILE_URL : STREET_TILE_URL;
-      const baseTileLayer = L.tileLayer(
-        initialTileUrl,
-        {
-          maxZoom: 19,
-          attribution:
-            currentBasemap === "satellite"
-              ? '&copy; <a href="https://www.esri.com/">Esri</a>, Maxar, Earthstar Geographics'
-              : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        }
-      ).addTo(map);
+      // No remote map tiles are requested in the offline prototype.
+      const baseTileLayer = L.layerGroup().addTo(map);
 
       layersGroupRef.current.baseMap = baseTileLayer;
 
@@ -747,51 +706,7 @@ export const AdvancedMap: React.FC<AdvancedMapProps> = ({
         hazardGroup.addLayer(polygon);
       });
 
-      // Dynamic Circular Hazard Swaths
-      // Chamoli GLOF Inundation Buffer
-      const chamoliHazard = L.circle([30.5541, 79.5663], {
-        radius: 35000,
-        color: "#ef4444",
-        weight: 1.5,
-        opacity: 0.85,
-        fillColor: "#ef4444",
-        fillOpacity: 0.15,
-        dashArray: "4, 4",
-      }).bindTooltip("GLOF RED ZONE: Chamoli / Dhauliganga Watershed", {
-        className: "tactical-tooltip",
-        sticky: true,
-      });
-      hazardGroup.addLayer(chamoliHazard);
-
-      // Bay of Bengal Cyclone Varun Storm Surge Inundation Swath
-      const cycloneHazard = L.circle([19.8135, 85.8312], {
-        radius: 65000,
-        color: "#ef4444",
-        weight: 1.5,
-        opacity: 0.85,
-        fillColor: "#ef4444",
-        fillOpacity: 0.18,
-        dashArray: "4, 4",
-      }).bindTooltip("CYCLONE RED ZONE: Odisha-Andhra Surge Swath", {
-        className: "tactical-tooltip",
-        sticky: true,
-      });
-      hazardGroup.addLayer(cycloneHazard);
-
-      // Brahmaputra Flood Plain Surcharge Swath
-      const assamHazard = L.circle([26.6854, 93.3512], {
-        radius: 45000,
-        color: "#f59e0b",
-        weight: 1.5,
-        opacity: 0.8,
-        fillColor: "#f59e0b",
-        fillOpacity: 0.15,
-        dashArray: "4, 3",
-      }).bindTooltip("WARNING ZONE: Brahmaputra Embankment Breach", {
-        className: "tactical-tooltip",
-        sticky: true,
-      });
-      hazardGroup.addLayer(assamHazard);
+      // No verified hazard observation polygons or buffers are available.
 
       // --- 9B. CRITICAL EVACUATION CORRIDORS & ROAD CUTOFFS ---
       const evacuationGroup = L.layerGroup().addTo(map);
@@ -888,8 +803,8 @@ export const AdvancedMap: React.FC<AdvancedMapProps> = ({
       layersGroupRef.current.incidents = incidentsGroup;
 
       activeIncidents.forEach((inc) => {
-        const isCritical = inc.severity === "CRITICAL";
-        const isHigh = inc.severity === "HIGH";
+        const isCritical = inc.verificationStatus === "VERIFIED_BY_AUTHORITY" && inc.severity === "CRITICAL";
+        const isHigh = inc.verificationStatus === "VERIFIED_BY_AUTHORITY" && inc.severity === "HIGH";
         const col = isCritical ? "#ef4444" : isHigh ? "#f59e0b" : "#38bdf8";
 
         const incidentIcon = L.divIcon({
@@ -927,8 +842,8 @@ export const AdvancedMap: React.FC<AdvancedMapProps> = ({
             <div class="font-semibold text-slate-200 mb-1 leading-tight">${inc.title}</div>
             <div class="text-[10px] text-slate-400 mb-1">${inc.locationName}</div>
             <div class="flex justify-between border-t border-white/10 pt-1 text-[10px]">
-              <span class="text-slate-400">AT RISK: <strong class="text-white">${inc.populationAtRisk.toLocaleString()}</strong></span>
-              <span class="text-orange-400 font-bold">INDEX: ${inc.relocationScore}</span>
+              <span class="text-slate-400">EXPOSURE: <strong class="text-white">NOT ASSESSED</strong></span>
+              <span class="text-orange-400 font-bold">RELOCATION: NOT ASSESSED</span>
             </div>
           </div>
         `);
@@ -936,90 +851,8 @@ export const AdvancedMap: React.FC<AdvancedMapProps> = ({
         incidentsGroup.addLayer(incidentMarker);
       });
 
-      // --- 12. NATIONAL COMMAND CENTER (DELHI HQ) ---
-      const hqIcon = L.divIcon({
-        className: "tactical-marker-clean",
-        html: `
-          <div class="flex items-center gap-1.5 bg-[#05070e]/95 border border-cyan-400 px-2 py-0.5 rounded-xs shadow-xl cursor-pointer">
-            <div class="w-2 h-2 bg-cyan-400 rotate-45"></div>
-            <div class="font-mono text-[9px] font-bold text-white">DELHI // ISIE HQ</div>
-          </div>
-        `,
-        iconSize: [120, 22],
-        iconAnchor: [60, 11],
-      });
-      const hqMarker = L.marker([28.6139, 77.2090], { icon: hqIcon }).bindPopup(`
-        <div class="font-mono text-xs p-1 text-slate-100">
-          <div class="font-bold text-cyan-400">ISIE NATIONAL SITUATION ROOM</div>
-          <div class="text-[10px] text-slate-300 mt-1">NEW DELHI NATIONAL COMMAND CENTER</div>
-          <div class="text-[10px] text-emerald-400 mt-0.5">READINESS: ACTIVE DEFCON-2 WATCH</div>
-        </div>
-      `);
-      incidentsGroup.addLayer(hqMarker);
-
-      // --- 12B. SENTINEL-1 SAR FLOOD RADAR OVERLAY ---
-      const sarGroup = L.layerGroup();
-      layersGroupRef.current.sarSwaths = sarGroup;
-
-      const sarPolygonAssam = L.polygon(
-        [
-          [27.5, 92.5],
-          [27.8, 95.8],
-          [26.0, 95.5],
-          [25.8, 92.2],
-        ],
-        {
-          color: "#06b6d4",
-          weight: 1.5,
-          opacity: 0.65,
-          fillColor: "#0891b2",
-          fillOpacity: 0.25,
-          dashArray: "6, 4",
-        }
-      ).bindTooltip("COPERNICUS SENTINEL-1 SAR // Flood Extent Radar Swath", {
-        className: "tactical-tooltip",
-        sticky: true,
-      });
-      sarGroup.addLayer(sarPolygonAssam);
-
-      const sarPolygonOdisha = L.polygon(
-        [
-          [20.8, 84.5],
-          [21.2, 87.2],
-          [18.5, 86.5],
-          [18.2, 83.8],
-        ],
-        {
-          color: "#06b6d4",
-          weight: 1.5,
-          opacity: 0.65,
-          fillColor: "#0891b2",
-          fillOpacity: 0.25,
-          dashArray: "6, 4",
-        }
-      ).bindTooltip("COPERNICUS SENTINEL-1 SAR // Coastal Surge Inundation Swath", {
-        className: "tactical-tooltip",
-        sticky: true,
-      });
-      sarGroup.addLayer(sarPolygonOdisha);
-
-      // --- 12C. IMD DOPPLER RADAR PRECIPITATION OVERLAY ---
-      const radarGroup = L.layerGroup();
-      layersGroupRef.current.radarPrecipitation = radarGroup;
-
-      const radarCircleOdisha = L.circle([19.8, 85.8], {
-        radius: 120000,
-        color: "#f59e0b",
-        weight: 1.5,
-        opacity: 0.6,
-        fillColor: "#ea580c",
-        fillOpacity: 0.2,
-        dashArray: "3, 5",
-      }).bindTooltip("IMD DOPPLER RADAR // Reflectivity dBZ > 45 (Extreme Rain)", {
-        className: "tactical-tooltip",
-        sticky: true,
-      });
-      radarGroup.addLayer(radarCircleOdisha);
+      layersGroupRef.current.sarSwaths = L.layerGroup();
+      layersGroupRef.current.radarPrecipitation = L.layerGroup();
 
       // --- 13. Dynamic Zoom Listeners for Progressive Reveal ---
       map.on("zoom", () => {
@@ -1067,41 +900,13 @@ export const AdvancedMap: React.FC<AdvancedMapProps> = ({
       return {
         tier: "TIER 3",
         label: "DISTRICT & GEOGRAPHIC WATERSHED",
-        detail: "High-altitude Peaks (Nanda Devi, Trishul), Mountain Passes, Dams (Tehri, Hirakud) & District Centers active.",
+        detail: "Local geographic reference only. No hazard, route, shelter, or capacity data is loaded.",
         badgeVariant: "red" as const,
       };
     }
   };
 
   const currentTier = getZoomTierInfo(currentZoom);
-
-  if (useGoogleMaps) {
-    return (
-      <div className={`relative w-full h-full min-h-[440px] bg-[#05070e] overflow-hidden select-none ${className}`}>
-        <GoogleMap2DView
-          isFullscreen={isFullscreen}
-          onToggleFullscreen={onToggleFullscreen}
-          selectedIncidentId={selectedIncidentId}
-          onSelectIncident={onSelectIncident}
-          incidents={activeIncidents}
-          onFallbackToLeaflet={() => setUseGoogleMaps(false)}
-          basemap={currentBasemap}
-          onBasemapChange={handleBasemapChange}
-          activeLayers={propActiveLayers}
-          layerOpacities={propLayerOpacities}
-        />
-        <div className="absolute bottom-3.5 left-3.5 z-20">
-          <button
-            onClick={() => setUseGoogleMaps(false)}
-            className="px-2.5 py-1 bg-isie-panel/90 hover:bg-isie-panel border border-white/10 hover:border-white/20 text-[10px] text-isie-text-muted hover:text-white rounded-xs font-mono backdrop-blur-md shadow-md transition-colors"
-            title="Switch to Offline Tactical Vector Map"
-          >
-            SWITCH TO VECTOR MAP
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div
@@ -1118,27 +923,16 @@ export const AdvancedMap: React.FC<AdvancedMapProps> = ({
             : "map-style-natural"
         }`}
       />
+      <div className="absolute bottom-3.5 left-3.5 z-20 rounded-xs border border-amber-400/70 bg-black/90 px-2.5 py-1 font-mono text-[10px] font-bold text-amber-200">
+        OFFLINE PROTOTYPE // NO EXTERNAL MAP DATA
+      </div>
 
       {/* Top Header Tactical HUD Bar */}
       <div className="absolute top-2.5 left-2.5 right-2.5 z-10 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
         <div className="flex flex-wrap items-center gap-2 pointer-events-auto">
           <TacticalBadge variant="orange" size="sm">
-            2D INDIA TACTICAL
+            OFFLINE REFERENCE CANVAS
           </TacticalBadge>
-
-          {/* Quick Basemap Toggle: Satellite vs Street */}
-          <BasemapQuickToggle
-            basemap={currentBasemap}
-            onChange={handleBasemapChange}
-          />
-
-          <button
-            onClick={() => setUseGoogleMaps(true)}
-            className="px-2 py-0.5 bg-isie-cyan/20 hover:bg-isie-cyan/30 border border-isie-cyan/60 text-isie-cyan hover:text-white rounded-xs font-mono text-[10px] font-bold uppercase transition-colors"
-            title="Switch to Google Maps 2D Operational View"
-          >
-            SWITCH TO GOOGLE MAPS
-          </button>
 
           {/* Progressive Zoom Level Telemetry Badge */}
           <div className="flex items-center gap-1.5 bg-[#05070e]/95 border border-cyan-500/40 px-2 py-0.5 rounded-xs backdrop-blur-md shadow-lg font-mono text-[10px]">
@@ -1155,38 +949,17 @@ export const AdvancedMap: React.FC<AdvancedMapProps> = ({
               <Compass className="w-3 h-3 text-isie-cyan animate-pulse" />
               <span>FOCUS:</span>
             </div>
-            {[
-              { id: "INDIA", label: "INDIA (5.0X)", lat: 22.5, lon: 78.9, zoom: 5.0 },
-              { id: "CHAMOLI", label: "CHAMOLI (8.2X)", lat: 30.5541, lon: 79.5663, zoom: 8.2 },
-              { id: "ASSAM", label: "ASSAM (7.8X)", lat: 26.6854, lon: 93.3512, zoom: 7.8 },
-              { id: "CYCLONE", label: "ODISHA (7.8X)", lat: 19.8135, lon: 85.8312, zoom: 7.8 },
-              { id: "CAUVERY", label: "CAUVERY (8.0X)", lat: 11.9022, lon: 78.1456, zoom: 8.0 },
-              { id: "HQ", label: "DELHI HQ (9.0X)", lat: 28.6139, lon: 77.2090, zoom: 9.0 },
-            ].map((p) => (
-              <button
-                key={p.id}
-                onClick={() => {
-                  mapInstanceRef.current?.flyTo([p.lat, p.lon], p.zoom, { duration: 1.2 });
-                  const inc = activeIncidents.find(
-                    (i) =>
-                      Math.abs(i.coordinates.lat - p.lat) < 0.3 &&
-                      Math.abs(i.coordinates.lng - p.lon) < 0.3
-                  );
-                  if (inc) selectIncident(inc);
-                }}
-                className="px-1.5 py-0.5 rounded-xs font-mono text-[9px] uppercase tracking-wider text-isie-text-muted hover:text-white hover:bg-white/10 transition-colors shrink-0"
-              >
-                {p.label}
-              </button>
-            ))}
+            <span className="px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-amber-200">
+              FICTIONAL COORDINATES // NOT FOR NAVIGATION
+            </span>
           </div>
         </div>
 
-        {/* Live Operational Incidents Indicator */}
+        {/* Local exercise record count */}
         <div className="flex items-center gap-1.5 bg-isie-panel/90 border border-white/15 px-2.5 py-1 rounded-sm backdrop-blur-md shadow-md pointer-events-auto">
-          <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
           <span className="font-mono text-[10px] text-white tracking-wider font-semibold">
-            {activeIncidents.length} OPERATIONAL TARGETS
+            {activeIncidents.length} LOCAL UNVERIFIED RECORDS
           </span>
         </div>
       </div>
@@ -1204,9 +977,9 @@ export const AdvancedMap: React.FC<AdvancedMapProps> = ({
         <div className="absolute top-20 left-2.5 right-2.5 sm:right-auto sm:w-80 z-20 bg-isie-panel/95 border border-isie-primary/50 rounded-sm p-3.5 shadow-2xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150 select-text">
           <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-cyan-400" />
               <span className="font-mono text-xs font-bold text-white uppercase tracking-wider">
-                {activeIncident.eventCode} // {activeIncident.severity}
+                {activeIncident.eventCode} // {activeIncident.verificationStatus}
               </span>
             </div>
             <button
@@ -1231,12 +1004,12 @@ export const AdvancedMap: React.FC<AdvancedMapProps> = ({
             </p>
             <div className="grid grid-cols-2 gap-2 pt-1.5 border-t border-white/5 text-[10px]">
               <div className="bg-white/[0.03] p-1.5 rounded-xs">
-                <span className="text-isie-text-muted block text-[9px]">AT RISK</span>
-                <span className="text-white font-bold">{activeIncident.populationAtRisk.toLocaleString()}</span>
+                  <span className="text-isie-text-muted block text-[9px]">EXPOSURE</span>
+                  <span className="text-white font-bold">NOT ASSESSED</span>
               </div>
               <div className="bg-white/[0.03] p-1.5 rounded-xs">
-                <span className="text-isie-text-muted block text-[9px]">RELOCATION INDEX</span>
-                <span className="text-isie-primary font-bold">{activeIncident.relocationScore} / 100</span>
+                <span className="text-isie-text-muted block text-[9px]">RELOCATION</span>
+                <span className="text-isie-primary font-bold">NOT ASSESSED</span>
               </div>
             </div>
           </div>
@@ -1247,36 +1020,15 @@ export const AdvancedMap: React.FC<AdvancedMapProps> = ({
       <div className="absolute bottom-2.5 left-2.5 z-10 bg-isie-panel/90 border border-white/10 p-2.5 rounded-sm backdrop-blur-md hidden sm:block max-w-[240px] pointer-events-none">
         <div className="flex items-center justify-between mb-1.5">
           <p className="font-mono text-[9px] uppercase tracking-wider text-isie-text-muted font-semibold">
-            Tactical GIS Legend
+            NO LIVE OPERATIONAL LAYERS
           </p>
           <span className="font-mono text-[8px] text-cyan-400 font-bold">
-            {currentZoom >= 5.8 ? "ZOOM REVEAL ON" : "ZOOM IN FOR DETAILS"}
+            STATIC REFERENCE ONLY
           </span>
         </div>
         <div className="flex flex-col gap-1 font-mono text-[9px]">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
-            <span className="text-red-400 truncate">RED ZONE // CRITICAL SURGE</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-            <span className="text-amber-400 truncate">WARNING // ADVISORY BASIN</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-0.5 bg-emerald-400 shrink-0" />
-            <span className="text-emerald-300 truncate">EVACUATION CORRIDOR // OPEN</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-0.5 bg-red-400 shrink-0 border-b border-dashed" />
-            <span className="text-red-400 truncate">ROAD CUTOFF // SEVERED</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-xs bg-cyan-400 shrink-0" />
-            <span className="text-isie-cyan truncate">SAFE HAVEN // SHELTER DEPOT</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-sky-400 shrink-0" />
-            <span className="text-sky-300 truncate">STATE & PHYSIOGRAPHIC MATRIX</span>
+          <div className="text-isie-text-dim leading-relaxed">
+            Hazard, route, shelter, satellite, and population layers are unavailable. Local UI controls do not load provider data.
           </div>
         </div>
       </div>

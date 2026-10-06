@@ -34,28 +34,28 @@ export default function GlobalSituationPage() {
   const regions = [
     {
       id: "ALL",
-      name: "Global Composite View",
+      name: "Fictional Exercise Region",
       count: incidents.length,
     },
     {
       id: "HIM",
-      name: "Himalayan Glacial Belt",
-      count: incidents.filter((i) => i.region?.includes("Himalayan") || i.eventCode.includes("HIM")).length,
+      name: "Example Zone A (fictional)",
+      count: incidents.filter((i) => i.region?.includes("Example Zone A")).length,
     },
     {
       id: "NOR",
-      name: "Northern River Basins",
-      count: incidents.filter((i) => i.region?.includes("Northern") || i.eventCode.includes("NOR")).length,
+      name: "Example Zone B (fictional)",
+      count: incidents.filter((i) => i.region?.includes("Example Zone B")).length,
     },
     {
       id: "CST",
-      name: "Coastal Surge Corridors",
-      count: incidents.filter((i) => i.region?.includes("Coastal") || i.eventCode.includes("CST")).length,
+      name: "Example Zone C (fictional)",
+      count: incidents.filter((i) => i.region?.includes("Example Zone C")).length,
     },
     {
       id: "PEN",
-      name: "Peninsular Catchment Areas",
-      count: incidents.filter((i) => i.region?.includes("Peninsular") || i.eventCode.includes("PEN")).length,
+      name: "Example Zone D (fictional)",
+      count: incidents.filter((i) => i.region?.includes("Example Zone D")).length,
     },
   ];
 
@@ -64,15 +64,15 @@ export default function GlobalSituationPage() {
 
   const filteredIncidents = incidents.filter((inc) => {
     if (selectedRegion === "ALL") return true;
-    if (selectedRegion === "HIM") return inc.region?.includes("Himalayan") || inc.eventCode.includes("HIM");
-    if (selectedRegion === "NOR") return inc.region?.includes("Northern") || inc.eventCode.includes("NOR");
-    if (selectedRegion === "CST") return inc.region?.includes("Coastal") || inc.eventCode.includes("CST");
-    if (selectedRegion === "PEN") return inc.region?.includes("Peninsular") || inc.eventCode.includes("PEN");
+    if (selectedRegion === "HIM") return inc.region?.includes("Example Zone A");
+    if (selectedRegion === "NOR") return inc.region?.includes("Example Zone B");
+    if (selectedRegion === "CST") return inc.region?.includes("Example Zone C");
+    if (selectedRegion === "PEN") return inc.region?.includes("Example Zone D");
     return true;
   });
 
   return (
-    <AppShell pageTitle="Global Situation // Macro Environmental Telemetry">
+    <AppShell pageTitle="Global Situation // Fictional Exercise View">
       <div className="flex-1 flex flex-col p-4 md:p-6 gap-6 max-w-7xl mx-auto w-full select-none">
         {/* Top Header & Regional Filter */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/10">
@@ -80,17 +80,17 @@ export default function GlobalSituationPage() {
             <div className="flex items-center gap-2 mb-1">
               <Globe2 className="w-5 h-5 text-isie-cyan" />
               <h1 className="font-mono text-xl font-bold uppercase tracking-wider text-white">
-                Global Operating Environment
+                Fictional Exercise Environment
               </h1>
             </div>
             <p className="text-xs text-isie-text-secondary">
-              Strategic transboundary monitoring, macro meteorological phenomena, and multi-region correlation.
+              Local synthetic exercise records only. No provider feeds, external monitoring, or geographic verification are connected.
             </p>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
             <TacticalBadge variant="cyan" size="sm" pulse>
-              SYNOPTIC SCAN: ACTIVE // {incidents.length} HAZARD NODES
+              DEMO EXERCISE RECORDS // {incidents.length} LOCAL ITEMS
             </TacticalBadge>
             <Link
               href="/geospatial"
@@ -140,10 +140,10 @@ export default function GlobalSituationPage() {
           <div className="p-4 bg-isie-panel border border-white/10 rounded-sm min-w-0 flex flex-col justify-between space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-white/10">
               <span className="font-mono text-xs uppercase tracking-wider text-white font-semibold">
-                Emerging Signals Stream
+                Local Exercise Records
               </span>
               <TacticalBadge variant="orange" size="sm">
-                {incidents.length} SIGNALS
+                {incidents.length} SIMULATED
               </TacticalBadge>
             </div>
             <div className="space-y-2 font-mono text-xs max-h-48 overflow-y-auto pr-1 scrollbar-thin">
@@ -174,22 +174,13 @@ export default function GlobalSituationPage() {
               <span className="font-mono text-xs uppercase tracking-wider text-white font-semibold">
                 Cross-Region Correlation
               </span>
-              <TacticalBadge variant="safe" size="sm">
-                SYNCHRONIZED
+              <TacticalBadge variant="muted" size="sm">
+                NOT COMPUTED
               </TacticalBadge>
             </div>
             <div className="space-y-2 font-mono text-[11px] text-isie-text-secondary">
-              <div className="p-2 bg-white/[0.02] border border-white/5 rounded-xs flex justify-between">
-                <span>Himalayan → Ganga Basin</span>
-                <span className="text-amber-400 font-bold">HYDRO COUPLING (94%)</span>
-              </div>
-              <div className="p-2 bg-white/[0.02] border border-white/5 rounded-xs flex justify-between">
-                <span>Odisha Coast → Cyclone Swath</span>
-                <span className="text-red-400 font-bold">SURGE COUPLING (89%)</span>
-              </div>
-              <div className="p-2 bg-white/[0.02] border border-white/5 rounded-xs flex justify-between">
-                <span>Mettur Dam → Cauvery Delta</span>
-                <span className="text-sky-300 font-bold">CONTROLLED (45%)</span>
+              <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xs text-isie-text-dim">
+                Not computed. Correlation requires verified, timestamped observations from multiple independent sources; no such inputs are connected.
               </div>
             </div>
           </div>
@@ -197,24 +188,24 @@ export default function GlobalSituationPage() {
           <div className="p-4 bg-isie-panel border border-white/10 rounded-sm flex flex-col justify-between space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-white/10">
               <span className="font-mono text-xs uppercase tracking-wider text-white font-semibold">
-                Global Severity Distribution
+                Exercise Record Summary
               </span>
               <TacticalBadge variant="muted" size="sm">
-                {incidents.length} TOTAL NODES
+                {incidents.length} LOCAL FIXTURES
               </TacticalBadge>
             </div>
             <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xs space-y-3 font-mono text-xs">
               <div className="flex justify-between items-center text-red-400">
-                <span>CRITICAL HAZARD NODES</span>
+                <span>SIMULATED CRITICAL-LABEL RECORDS</span>
                 <span className="font-bold">{criticalCount}</span>
               </div>
               <div className="flex justify-between items-center text-amber-400">
-                <span>WARNING / BUFFER NODES</span>
+                <span>SIMULATED WARNING-LABEL RECORDS</span>
                 <span className="font-bold">{warningCount}</span>
               </div>
               <div className="flex justify-between items-center text-emerald-400">
-                <span>NOMINAL / SECURE BASINS</span>
-                <span className="font-bold">ALL OTHERS</span>
+                <span>REAL-WORLD SEVERITY</span>
+                <span className="font-bold">NOT ASSESSED</span>
               </div>
             </div>
           </div>

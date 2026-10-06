@@ -11,6 +11,7 @@ import {
   fbSignOut,
   onAuthStateChanged,
   syncUserProfile,
+  getTrustedUserRole,
   verifyFirestoreConnection,
   FirestoreUserProfile,
 } from "@/lib/firebase/client";
@@ -37,7 +38,7 @@ export const DEFAULT_DEMO_USER: AuthUser = {
   id: "usr-demo-01",
   name: "Operations Director (Trident Actual)",
   email: "demo@isie.ai",
-  role: "Command / Decision Maker",
+  role: "DEMO_USER",
   organization: "National Crisis Command / CredForge",
   clearance: "Strategic Command Level 4",
   callsign: "DIR-OP",
@@ -60,7 +61,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const STORAGE_KEY = "isie_auth_session";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<AuthUser | null>(DEFAULT_DEMO_USER);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
 
   // Listen to Firebase Auth state
@@ -69,27 +70,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        setUser(JSON.parse(stored));
-      } else {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_DEMO_USER));
-        setUser(DEFAULT_DEMO_USER);
+        const parsed = JSON.parse(stored) as AuthUser;
+        if (parsed?.isDemo === true && parsed.role === "DEMO_USER") {
+          setUser(DEFAULT_DEMO_USER);
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
+        }
       }
     } catch {
-      setUser(DEFAULT_DEMO_USER);
+      localStorage.removeItem(STORAGE_KEY);
     }
 
     // Listen to Firebase Auth state for real users
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       if (fbUser) {
         const synced = await syncUserProfile(fbUser);
+        const trustedRole = await getTrustedUserRole(fbUser);
         const mappedUser: AuthUser = {
           id: fbUser.uid,
           name: fbUser.displayName || synced?.displayName || "Tactical Operator",
           email: fbUser.email || "",
-          role: synced?.role || "OPERATOR",
-          organization: synced?.organization || "National Crisis Command",
-          clearance: synced?.clearance || "Level 4 Strategic",
-          callsign: synced?.callsign || (fbUser.displayName?.slice(0, 4).toUpperCase() || "OPR") + "-TAC",
+          role: trustedRole,
+          organization: synced?.organization || "UNSPECIFIED",
+          clearance: synced?.clearance || "UNASSIGNED",
+          callsign: synced?.callsign || "UNASSIGNED",
           isDemo: false,
           avatarUrl: fbUser.photoURL || undefined,
           provider: fbUser.providerData?.[0]?.providerId || "firebase",
@@ -104,9 +108,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const stored = localStorage.getItem(STORAGE_KEY);
           if (stored) {
             const parsed = JSON.parse(stored);
-            if (parsed.isDemo) {
-              setUser(parsed);
+            if (parsed.isDemo === true && parsed.role === "DEMO_USER") {
+              setUser(DEFAULT_DEMO_USER);
+            } else {
+              localStorage.removeItem(STORAGE_KEY);
             }
+          } else {
+            setUser(null);
           }
         } catch {}
       }
@@ -121,11 +129,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const result = await signInWithPopup(auth, googleProvider);
       if (result.user) {
         const synced = await syncUserProfile(result.user);
+        const trustedRole = await getTrustedUserRole(result.user);
         const authedUser: AuthUser = {
           id: result.user.uid,
           name: result.user.displayName || synced?.displayName || "Operator",
           email: result.user.email || "",
-          role: synced?.role || "OPERATOR",
+          role: trustedRole,
           organization: synced?.organization || "National Crisis Center",
           clearance: synced?.clearance || "Strategic Level 4",
           callsign: synced?.callsign || "DIR-GOOGLE",
@@ -187,14 +196,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const credential = await signInWithEmailAndPassword(auth, email.trim(), pass);
       const synced = await syncUserProfile(credential.user);
+      const trustedRole = await getTrustedUserRole(credential.user);
       const authedUser: AuthUser = {
         id: credential.user.uid,
         name: credential.user.displayName || synced?.displayName || email.split("@")[0].toUpperCase(),
         email: credential.user.email || email,
-        role: synced?.role || "OPERATOR",
-        organization: synced?.organization || "National Crisis Command",
-        clearance: synced?.clearance || "Level 3 Command",
-        callsign: synced?.callsign || "TAC-CMD",
+        role: trustedRole,
+        organization: synced?.organization || "UNSPECIFIED",
+        clearance: synced?.clearance || "UNASSIGNED",
+        callsign: synced?.callsign || "UNASSIGNED",
         isDemo: false,
         provider: "password",
       };
@@ -238,20 +248,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         const synced = await syncUserProfile(cred.user, {
           displayName: data.name,
-          role: data.role || "OPERATOR",
-          organization: data.organization || "National Crisis Command",
-          clearance: "Strategic Operator Level 3",
-          callsign: (data.name.slice(0, 4) || "OPER").toUpperCase() + "-01",
+          role: "VIEWER",
+          organization: data.organization || "UNSPECIFIED",
+          clearance: "UNASSIGNED",
+          callsign: "UNASSIGNED",
         });
 
         const authedUser: AuthUser = {
           id: cred.user.uid,
           name: data.name || synced?.displayName || "Operator",
           email: cred.user.email || data.email,
-          role: synced?.role || data.role || "OPERATOR",
-          organization: synced?.organization || data.organization || "National Crisis Command",
-          clearance: synced?.clearance || "Strategic Operator Level 3",
-          callsign: synced?.callsign || "OPER-01",
+          role: await getTrustedUserRole(cred.user),
+          organization: synced?.organization || data.organization || "UNSPECIFIED",
+          clearance: synced?.clearance || "UNASSIGNED",
+          callsign: synced?.callsign || "UNASSIGNED",
           isDemo: false,
           provider: "password",
         };
@@ -286,7 +296,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         isAuthenticated: !!user,
-        isDemoMode: user?.isDemo ?? true,
+        isDemoMode: user?.isDemo ?? false,
         login,
         loginWithGoogle,
         loginDemo,

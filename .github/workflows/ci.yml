@@ -1,0 +1,19 @@
+name: ISIE CI
+on: [push, pull_request]
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: pip install -r backend/requirements.txt pytest
+      - run: PYTHONPATH=backend pytest -q backend/tests
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with: {bun-version: '1.2.20'}
+      - run: bun install --frozen-lockfile
+      - run: bun run lint

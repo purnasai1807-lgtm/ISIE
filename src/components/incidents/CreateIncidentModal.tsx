@@ -74,44 +74,6 @@ const INCIDENT_TAXONOMY: {
   },
 ];
 
-const LOCATION_PRESETS = [
-  {
-    name: "Chamoli, Uttarakhand",
-    state: "Uttarakhand",
-    district: "Chamoli",
-    lat: 30.3165,
-    lng: 79.5461,
-  },
-  {
-    name: "Joshimath, Uttarakhand",
-    state: "Uttarakhand",
-    district: "Chamoli",
-    lat: 30.5564,
-    lng: 79.5633,
-  },
-  {
-    name: "Wayanad, Kerala",
-    state: "Kerala",
-    district: "Wayanad",
-    lat: 11.6854,
-    lng: 76.132,
-  },
-  {
-    name: "Puri Coastal, Odisha",
-    state: "Odisha",
-    district: "Puri",
-    lat: 19.8135,
-    lng: 85.8312,
-  },
-  {
-    name: "Dibrugarh, Assam",
-    state: "Assam",
-    district: "Dibrugarh",
-    lat: 27.4728,
-    lng: 94.912,
-  },
-];
-
 export function CreateIncidentModal({
   isOpen,
   onClose,
@@ -123,32 +85,28 @@ export function CreateIncidentModal({
   const [title, setTitle] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<EventCategory>("NATURAL_HAZARD");
   const [selectedType, setSelectedType] = useState<IncidentSpecificType>("Flood");
-  const [severity, setSeverity] = useState<SeverityLevel>("HIGH");
-  const [status, setStatus] = useState<EventStatus>("ACTIVE");
+  const [severity, setSeverity] = useState<SeverityLevel>("INFORMATIONAL");
+  const [status, setStatus] = useState<EventStatus>("REPORTED");
   const [description, setDescription] = useState("");
 
   // Location State
-  const [country, setCountry] = useState("India");
-  const [stateName, setStateName] = useState("Uttarakhand");
-  const [district, setDistrict] = useState("Chamoli");
-  const [locationName, setLocationName] = useState("Chamoli Sector, Uttarakhand");
-  const [latitude, setLatitude] = useState("30.3165");
-  const [longitude, setLongitude] = useState("79.5461");
+  const [country, setCountry] = useState("");
+  const [stateName, setStateName] = useState("");
+  const [district, setDistrict] = useState("");
+  const [locationName, setLocationName] = useState("");
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
 
   // Impact State
-  const [populationAtRisk, setPopulationAtRisk] = useState("10000");
-  const [affectedAreaKm2, setAffectedAreaKm2] = useState("45");
-  const [infrastructureImpact, setInfrastructureImpact] = useState(
-    "2 bridges severed, 1 feeder substation compromised"
-  );
-  const [criticalFacilities, setCriticalFacilities] = useState("3");
+  const [populationAtRisk, setPopulationAtRisk] = useState("");
+  const [affectedAreaKm2, setAffectedAreaKm2] = useState("");
+  const [infrastructureImpact, setInfrastructureImpact] = useState("");
+  const [criticalFacilities, setCriticalFacilities] = useState("");
 
   // Intelligence State
-  const [source, setSource] = useState("CWC Hydrology / Field Command");
-  const [confidence, setConfidence] = useState<"LOW" | "MODERATE" | "HIGH" | "VERY_HIGH">("HIGH");
-  const [additionalNotes, setAdditionalNotes] = useState(
-    "Rapid sensor stream convergence indicates rising water level. Evacuation tier-1 activated."
-  );
+  const [source, setSource] = useState("");
+  const [confidence, setConfidence] = useState<"LOW" | "MODERATE" | "HIGH" | "VERY_HIGH">("LOW");
+  const [additionalNotes, setAdditionalNotes] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -156,15 +114,7 @@ export function CreateIncidentModal({
 
   if (!isOpen) return null;
 
-  const canCreate = !!user && hasPermission(user.role, "canCreateIncident");
-
-  const handleApplyPreset = (preset: typeof LOCATION_PRESETS[0]) => {
-    setStateName(preset.state);
-    setDistrict(preset.district);
-    setLocationName(`${preset.district}, ${preset.state}, India`);
-    setLatitude(preset.lat.toString());
-    setLongitude(preset.lng.toString());
-  };
+  const canCreate = !!user && (isDemoMode || hasPermission(user.role, "canCreateIncident"));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -190,7 +140,11 @@ export function CreateIncidentModal({
     }
 
     if (!source.trim()) {
-      setError("Authoritative intelligence source is required.");
+      setError("Identify the source of the user-provided report.");
+      return;
+    }
+    if (populationAtRisk.trim() && (!Number.isFinite(Number(populationAtRisk)) || Number(populationAtRisk) < 0)) {
+      setError("Population at risk must be a non-negative number or left blank if unknown.");
       return;
     }
 
@@ -203,20 +157,20 @@ export function CreateIncidentModal({
         category: selectedCategory,
         severity,
         status,
-        summary: description.trim() || `${selectedType} situation reported in ${district}, ${stateName}. Immediate monitoring active.`,
-        locationName: locationName.trim() || `${district}, ${stateName}`,
-        country: country.trim() || "India",
+        summary: description.trim(),
+        locationName: locationName.trim(),
+        country: country.trim(),
         affectedState: stateName.trim(),
         affectedDistrict: district.trim(),
-        region: `${district.trim()} Sector, ${stateName.trim()}`,
+        region: "",
         coordinates: {
           lat: latNum,
           lng: lngNum,
         },
-        populationAtRisk: parseInt(populationAtRisk, 10) || 0,
-        affectedAreaKm2: parseFloat(affectedAreaKm2) || 0,
+        populationAtRisk: populationAtRisk.trim() ? Number(populationAtRisk) : undefined,
+        affectedAreaKm2: affectedAreaKm2.trim() ? Number(affectedAreaKm2) : undefined,
         infrastructureImpact: infrastructureImpact.trim(),
-        criticalFacilitiesAffected: parseInt(criticalFacilities, 10) || 0,
+        criticalFacilitiesAffected: criticalFacilities.trim() ? Number(criticalFacilities) : undefined,
         source: source.trim(),
         confidence,
         additionalNotes: additionalNotes.trim(),
@@ -256,14 +210,16 @@ export function CreateIncidentModal({
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-mono text-xs font-bold uppercase tracking-wider text-white">
-                  OPERATIONAL DISPATCH // CREATE INCIDENT
+                  {isDemoMode ? "TABLETOP DEMO // ADD USER-PROVIDED CASE" : "OPERATIONAL DISPATCH // CREATE INCIDENT"}
                 </span>
                 <TacticalBadge variant="critical" size="sm">
-                  ONE CANONICAL SOURCE
+                  {isDemoMode ? "LOCAL DEMO ONLY" : "SUBMISSION DISABLED"}
                 </TacticalBadge>
               </div>
               <p className="text-[10px] text-isie-text-muted font-mono">
-                INITIALIZES INCIDENT RECORD WITH REAL-TIME DOWNSTREAM CASCADES (MAP, GLOBE, ALERTS, RISK)
+                {isDemoMode
+                  ? "SAVED ONLY IN THIS BROWSER DEMO WORKSPACE // UNVERIFIED // NO ALERT, DISPATCH OR OPERATIONAL EFFECT"
+                  : "INCIDENT SUBMISSION REQUIRES A TRUSTED BACKEND WITH PROVENANCE VALIDATION AND AUDIT LOGGING"}
               </p>
             </div>
           </div>
@@ -295,10 +251,10 @@ export function CreateIncidentModal({
               <ShieldCheck className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
               <div className="text-xs">
                 <div className="font-mono font-bold text-cyan-300 uppercase">
-                  Operational Incident Creation Ready
+                  Simulated Intake Only
                 </div>
                 <div className="text-isie-text-dim text-[11px] mt-0.5">
-                  Your role (<strong>{user?.role}</strong>) permits incident creation. Committing will persist to the centralized Firestore cluster and propagate downstream to 2D Map, 3D Globe, Risk, Alerts, and Timeline.
+                  This case is stored locally in your browser as user-provided and unverified. It is not sent to the backend, does not create alerts, and has no real-world effect.
                 </div>
               </div>
             </div>
@@ -310,10 +266,10 @@ export function CreateIncidentModal({
               <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
               <div className="text-xs font-mono">
                 <span className="font-bold text-emerald-300">
-                  INCIDENT {successId} COMMITTED TO FIRESTORE
+                  INCIDENT {successId} COMMITTED
                 </span>
                 <span className="block text-[11px] text-emerald-200/80">
-                  Operational cascades generated: Alerts, Hazard Red Zone, Timeline milestone, and Command Notification.
+                  Operational side effects were not generated.
                 </span>
               </div>
             </div>
@@ -347,7 +303,7 @@ export function CreateIncidentModal({
                     required
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g., Chamoli Flash Flood // Rishi Ganga Sector"
+                    placeholder="Enter a user-reported incident title"
                     className="w-full bg-isie-panel-light/60 border border-white/10 rounded-xs px-3 py-2 text-xs font-mono text-white placeholder-isie-text-dim outline-none focus:border-isie-primary/60"
                   />
                 </div>
@@ -404,6 +360,7 @@ export function CreateIncidentModal({
                     onChange={(e) => setSeverity(e.target.value as SeverityLevel)}
                     className="w-full bg-isie-panel-light/60 border border-white/10 rounded-xs px-3 py-2 text-xs font-mono text-white outline-none focus:border-isie-primary/60"
                   >
+                    <option value="INFORMATIONAL" className="bg-isie-panel">INFORMATIONAL</option>
                     <option value="CRITICAL" className="bg-isie-panel text-red-400">
                       CRITICAL (Immediate Threat / Catastrophic Cascade)
                     </option>
@@ -428,12 +385,7 @@ export function CreateIncidentModal({
                     onChange={(e) => setStatus(e.target.value as EventStatus)}
                     className="w-full bg-isie-panel-light/60 border border-white/10 rounded-xs px-3 py-2 text-xs font-mono text-white outline-none focus:border-isie-primary/60"
                   >
-                    <option value="ACTIVE" className="bg-isie-panel">ACTIVE (Immediate Tactical Response)</option>
                     <option value="REPORTED" className="bg-isie-panel">REPORTED (Awaiting Field Corroboration)</option>
-                    <option value="VERIFIED" className="bg-isie-panel">VERIFIED (Authority Confirmed)</option>
-                    <option value="MONITORING" className="bg-isie-panel">MONITORING (Observation Mode)</option>
-                    <option value="CONTAINED" className="bg-isie-panel">CONTAINED (Spread Arrested)</option>
-                    <option value="RESOLVED" className="bg-isie-panel">RESOLVED (De-escalated)</option>
                     <option value="DRAFT" className="bg-isie-panel">DRAFT (Internal Preparation)</option>
                   </select>
                 </div>
@@ -446,7 +398,7 @@ export function CreateIncidentModal({
                     rows={2}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Provide concise operational context, observed river surges, cloudburst timeline, or structural breaches..."
+                    placeholder="Enter observations provided by the reporting source."
                     className="w-full bg-isie-panel-light/60 border border-white/10 rounded-xs p-2 text-xs font-mono text-white placeholder-isie-text-dim outline-none focus:border-isie-primary/60"
                   />
                 </div>
@@ -463,21 +415,6 @@ export function CreateIncidentModal({
                   </h3>
                 </div>
                 <span className="font-mono text-[10px] text-emerald-400">INDIA-FIRST REGIONS</span>
-              </div>
-
-              {/* Location Presets */}
-              <div className="flex flex-wrap items-center gap-1.5 pb-1">
-                <span className="font-mono text-[10px] text-isie-text-dim mr-1">QUICK FILL:</span>
-                {LOCATION_PRESETS.map((p) => (
-                  <button
-                    key={p.name}
-                    type="button"
-                    onClick={() => handleApplyPreset(p)}
-                    className="px-2 py-0.5 bg-isie-panel-light/50 border border-white/10 hover:border-emerald-500/50 hover:text-emerald-300 text-[10px] font-mono text-isie-text-muted rounded-xs transition-colors"
-                  >
-                    {p.name}
-                  </button>
-                ))}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -576,15 +513,14 @@ export function CreateIncidentModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <div className="space-y-1">
                   <label className="font-mono text-[11px] uppercase tracking-wider text-isie-text-muted">
-                    Population at Risk *
+                    {isDemoMode ? "User-provided population (unverified)" : "Population at risk"}
                   </label>
                   <input
                     type="number"
-                    required
                     min={0}
                     value={populationAtRisk}
                     onChange={(e) => setPopulationAtRisk(e.target.value)}
-                    placeholder="10000"
+                    placeholder="Leave blank if unknown"
                     className="w-full bg-isie-panel-light/60 border border-white/10 rounded-xs px-3 py-2 text-xs font-mono text-white outline-none focus:border-amber-500/60"
                   />
                 </div>
@@ -598,7 +534,7 @@ export function CreateIncidentModal({
                     min={0}
                     value={affectedAreaKm2}
                     onChange={(e) => setAffectedAreaKm2(e.target.value)}
-                    placeholder="45"
+                    placeholder="Leave blank if unavailable"
                     className="w-full bg-isie-panel-light/60 border border-white/10 rounded-xs px-3 py-2 text-xs font-mono text-white outline-none focus:border-amber-500/60"
                   />
                 </div>
@@ -612,7 +548,7 @@ export function CreateIncidentModal({
                     min={0}
                     value={criticalFacilities}
                     onChange={(e) => setCriticalFacilities(e.target.value)}
-                    placeholder="3"
+                    placeholder="Leave blank if unavailable"
                     className="w-full bg-isie-panel-light/60 border border-white/10 rounded-xs px-3 py-2 text-xs font-mono text-white outline-none focus:border-amber-500/60"
                   />
                 </div>
@@ -625,7 +561,7 @@ export function CreateIncidentModal({
                     type="text"
                     value={infrastructureImpact}
                     onChange={(e) => setInfrastructureImpact(e.target.value)}
-                    placeholder="Road access impeded"
+                    placeholder="Enter a source-reported observation"
                     className="w-full bg-isie-panel-light/60 border border-white/10 rounded-xs px-3 py-2 text-xs font-mono text-white outline-none focus:border-amber-500/60"
                   />
                 </div>
@@ -651,7 +587,7 @@ export function CreateIncidentModal({
                     required
                     value={source}
                     onChange={(e) => setSource(e.target.value)}
-                    placeholder="e.g., CWC Hydrology / IMD Mausam / Field Command"
+                    placeholder="Name the source of the user-provided report"
                     className="w-full bg-isie-panel-light/60 border border-white/10 rounded-xs px-3 py-2 text-xs font-mono text-white outline-none focus:border-cyan-500/60"
                   />
                 </div>
@@ -667,10 +603,10 @@ export function CreateIncidentModal({
                     }
                     className="w-full bg-isie-panel-light/60 border border-white/10 rounded-xs px-3 py-2 text-xs font-mono text-white outline-none focus:border-cyan-500/60"
                   >
-                    <option value="VERY_HIGH" className="bg-isie-panel">VERY HIGH (98%+ / Triple Corroborated)</option>
-                    <option value="HIGH" className="bg-isie-panel">HIGH (90%+ / Verified Official Agency)</option>
-                    <option value="MODERATE" className="bg-isie-panel">MODERATE (75% / Single Sensor Telemetry)</option>
-                    <option value="LOW" className="bg-isie-panel">LOW (Initial Emerging Lead)</option>
+                    <option value="VERY_HIGH" className="bg-isie-panel">VERY HIGH (user-assessed)</option>
+                    <option value="HIGH" className="bg-isie-panel">HIGH (user-assessed)</option>
+                    <option value="MODERATE" className="bg-isie-panel">MODERATE (user-assessed)</option>
+                    <option value="LOW" className="bg-isie-panel">LOW (user-assessed)</option>
                   </select>
                 </div>
 
@@ -682,7 +618,7 @@ export function CreateIncidentModal({
                     type="text"
                     value={additionalNotes}
                     onChange={(e) => setAdditionalNotes(e.target.value)}
-                    placeholder="e.g., Relocation route 2 open; standby NDRF batallion alerted."
+                    placeholder="Optional reporter notes; not an automated directive"
                     className="w-full bg-isie-panel-light/60 border border-white/10 rounded-xs px-3 py-2 text-xs font-mono text-white outline-none focus:border-cyan-500/60"
                   />
                 </div>
@@ -695,7 +631,7 @@ export function CreateIncidentModal({
         <div className="p-4 border-t border-white/10 bg-isie-panel-light/40 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-mono text-isie-text-dim">
             <Compass className="w-3.5 h-3.5 text-isie-primary" />
-            <span>COMMITS TO LIVE FIRESTORE CLUSTER</span>
+            <span>WRITES DISABLED // BACKEND NOT CONFIGURED</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -708,9 +644,9 @@ export function CreateIncidentModal({
               size="sm"
               type="submit"
               form="create-incident-form"
-              disabled={loading || !canCreate}
+              disabled
             >
-              {loading ? "COMMITTING TO FIRESTORE..." : "+ COMMIT OPERATIONAL INCIDENT"}
+              {loading ? "SUBMITTING..." : "BACKEND NOT CONFIGURED"}
             </TacticalButton>
           </div>
         </div>

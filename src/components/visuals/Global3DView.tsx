@@ -25,7 +25,6 @@ import {
   Moon,
 } from "lucide-react";
 import { TacticalBadge } from "../ui/TacticalBadge";
-import { DEMO_INCIDENTS } from "@/data/demo/incidents";
 import {
   CONTINENTS,
   COUNTRIES,
@@ -217,7 +216,7 @@ export const Global3DView: React.FC<Global3DViewProps> = ({
   onSelectIncident,
   incidents,
 }) => {
-  const activeIncidents = incidents !== undefined ? incidents : DEMO_INCIDENTS;
+  const activeIncidents = incidents ?? [];
   const mountRef = useRef<HTMLDivElement>(null);
   const labelCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isRotating, setIsRotating] = useState(false);
@@ -693,7 +692,7 @@ export const Global3DView: React.FC<Global3DViewProps> = ({
         let matched: IntelligenceEvent | null = null;
         let closestDist = 24;
 
-        for (const inc of DEMO_INCIDENTS) {
+        for (const inc of activeIncidents) {
           const pos = latLonToVector3(inc.coordinates.lat, inc.coordinates.lng, GLOBE_RADIUS * 1.008);
           const normal = pos.clone().normalize();
           if (normal.dot(camera.position.clone().normalize()) > 0.2) {
@@ -1094,10 +1093,13 @@ export const Global3DView: React.FC<Global3DViewProps> = ({
 
       renderer.dispose();
     };
-  }, [isRotating, layerVisibility, onSelectIncident]);
+  }, [isRotating, layerVisibility, onSelectIncident, activeIncidents]);
 
   return (
     <div className={`relative w-full h-full min-h-[380px] bg-[#05070b] overflow-hidden select-none ${className}`}>
+      <div className="absolute bottom-3.5 left-3.5 z-20 rounded-xs border border-amber-400/70 bg-black/90 px-2.5 py-1 font-mono text-[10px] font-bold text-amber-200">
+        STATIC ILLUSTRATION LAYERS // NOT LIVE OR VERIFIED
+      </div>
       {/* 1. WebGL 3D Globe Canvas Container */}
       <div
         ref={mountRef}

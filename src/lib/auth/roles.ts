@@ -87,23 +87,10 @@ const ROLE_PERMISSIONS_MAP: Record<UserRole, RolePermissions> = {
   },
 };
 
-/**
- * Normalizes any freeform role string from OAuth or registration into canonical UserRole
- */
+/** Accept only canonical roles; display names and registration input grant no permissions. */
 export function normalizeRole(role?: string): UserRole {
-  if (!role) return "VIEWER";
-  const upper = role.toUpperCase();
-  if (upper.includes("ADMIN") || upper.includes("DIRECTOR") || upper.includes("SUPER")) {
-    return "ADMIN";
-  }
-  if (upper.includes("OPERATOR") || upper.includes("COMMAND") || upper.includes("DISASTER")) {
-    return "OPERATOR";
-  }
-  if (upper.includes("ANALYST") || upper.includes("RESEARCHER") || upper.includes("SCIENTIST")) {
-    return "ANALYST";
-  }
-  if (upper.includes("DEMO")) {
-    return "DEMO_USER";
+  if (role === "ADMIN" || role === "OPERATOR" || role === "ANALYST" || role === "DEMO_USER") {
+    return role;
   }
   return "VIEWER";
 }

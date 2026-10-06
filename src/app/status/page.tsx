@@ -1,45 +1,80 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Server, Activity, ShieldAlert, Cpu, Radio, CheckCircle, AlertTriangle } from "lucide-react";
 import { TacticalBadge } from "@/components/ui/TacticalBadge";
 
 export default function SystemStatusPage() {
+  const [backendState, setBackendState] = useState<"CHECKING" | "UNCONFIGURED" | "UNREACHABLE" | "LIMITED">("CHECKING");
+  const [backendDetail, setBackendDetail] = useState("Checking configured backend; this does not verify operational readiness.");
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/backend-health", { cache: "no-store" })
+      .then(async (response) => {
+        if (!active) return;
+        if (response.status === 503) {
+          setBackendState("UNCONFIGURED");
+          setBackendDetail("ISIE_BACKEND_URL is not configured; backend state is unavailable.");
+          return;
+        }
+        const result = await response.json();
+        if (!response.ok || result.status !== "limited") {
+          setBackendState("UNREACHABLE");
+          setBackendDetail("Configured backend could not be reached; its state is unavailable.");
+          return;
+        }
+        setBackendState("LIMITED");
+        setBackendDetail(
+          `Auth: ${result.authenticationConfigured ? "configured" : "unavailable"}; persistence: ${result.persistenceHealthy ? "healthy" : "unavailable"}; audit chain: ${result.auditIntegrity}; measurement adapter: ${result.providersConfigured ? "configured, not independently checked" : "not configured"}. Not operationally ready.`
+        );
+      })
+      .catch(() => {
+        if (active) {
+          setBackendState("UNREACHABLE");
+          setBackendDetail("Configured backend could not be reached; its state is unavailable.");
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const nodes = [
     {
       name: "Spatial GIS Projection Core",
-      protocol: "WGS-84 / WebGL",
-      status: "ONLINE",
-      detail: "Three.js & 2D Vector canvas engines operational",
-      variant: "safe" as const,
+      protocol: "WebGL presentation",
+      status: "PRESENTATION_ONLY",
+      detail: "Static map illustration; no verified operational spatial feed is connected.",
+      variant: "muted" as const,
     },
     {
       name: "Telemetry Ingestion Gateway",
-      protocol: "HTTPS / REST / WMS",
-      status: "STANDBY_UNCONNECTED",
-      detail: "No active sensor upstream connected (Frontend Preview Mode)",
-      variant: "cyan" as const,
-    },
-    {
-      name: "AI Carrying Capacity Estimator",
-      protocol: "Inference Endpoint",
-      status: "UNCONNECTED",
-      detail: "Awaiting backend ML model cluster deployment",
+      protocol: "Not configured",
+      status: "UNAVAILABLE",
+      detail: "No sensor or provider adapter is configured.",
       variant: "warning" as const,
     },
     {
+      name: "Python Backend API",
+      protocol: "Server-side health probe",
+      status: backendState,
+      detail: backendDetail,
+      variant: backendState === "LIMITED" ? "warning" as const : "muted" as const,
+    },
+    {
       name: "Stochastic What-If Simulation Engine",
-      protocol: "Compute Worker",
-      status: "UNCONNECTED",
-      detail: "Awaiting simulation engine backend integration",
+      protocol: "Python prototype",
+      status: "PROTOTYPE_NOT_OPERATIONAL",
+      detail: "A hypothetical-only API exists but is not wired to the frontend and is not validated for decisions.",
       variant: "warning" as const,
     },
     {
       name: "Alert Broadcast & Siren Dispatch",
-      protocol: "WebPush / SMS / Radio",
-      status: "STANDBY",
-      detail: "Local UI queue armed // Hardware dispatch offline",
+      protocol: "Not configured",
+      status: "NO DISPATCH",
+      detail: "No automated alert generation, notification, or external dispatch is configured.",
       variant: "muted" as const,
     },
   ];
@@ -57,7 +92,7 @@ export default function SystemStatusPage() {
               </h1>
             </div>
             <p className="text-xs text-isie-text-secondary">
-              Real-time verification of local presentation components, graphics hardware, and network interfaces.
+              Backend liveness is probed when configured; other component states below are static declarations.
             </p>
           </div>
 
@@ -77,12 +112,12 @@ export default function SystemStatusPage() {
                 System Mode: Frontend Preview // Non-Operational Standby
               </div>
               <div className="text-[11px] text-isie-text-dim mt-0.5">
-                Zero fake operational data. All API contracts and UI modules ready for production pipeline integration.
+                Prototype only: no verified source feeds, validated models, dispatch, or production approval.
               </div>
             </div>
           </div>
           <TacticalBadge variant="muted" size="sm">
-            UPTIME: 100%
+            MONITORING: NOT CONFIGURED
           </TacticalBadge>
         </div>
 

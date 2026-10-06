@@ -6,7 +6,9 @@
     "dev": "NODE_OPTIONS='--max-old-space-size=1024' next dev -p 3000",
     "build": "NODE_ENV=production next build && cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public 2>/dev/null || true",
     "start": "next start",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "prototype:test": "node --test backend/tests/prototype-workspace.test.mjs backend/tests/prototype-completeness.test.mjs",
+    "prototype:verify": "node --test backend/tests/prototype-workspace.test.mjs backend/tests/prototype-completeness.test.mjs && python -m pytest -q backend/tests/test_backend.py"
   },
   "dependencies": {
     "@google/genai": "^2.26.0",

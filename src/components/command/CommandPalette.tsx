@@ -65,7 +65,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const commandItems: CommandItem[] = [
     {
       id: "cmd-search-grounding",
-      title: "Live Google Search Grounding",
+      title: "External Search (Unavailable)",
       category: "OPERATIONS",
       icon: Globe,
       shortcut: "S G",
@@ -73,11 +73,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         onClose();
         setSearchModalOpen(true);
       },
-      description: "Query real-time IMD, CWC, NDMA weather advisories via gemini-3.5-flash googleSearch tool",
+      description: "Provider integration is disabled; no search request or live verification is available",
     },
     {
       id: "cmd-maps-grounding",
-      title: "Google Maps Grounding Intelligence",
+      title: "External Maps (Unavailable)",
       category: "OPERATIONS",
       icon: MapPin,
       shortcut: "M P",
@@ -85,11 +85,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         onClose();
         setMapsModalOpen(true);
       },
-      description: "Query real-time places, disaster routes, and infrastructure via gemini-3.5-flash",
+      description: "Provider integration is disabled; no places, roads, routes, or facilities are verified",
     },
     {
       id: "cmd-audio-transcribe",
-      title: "Tactical Voice Dispatch & Audio Transcribe",
+      title: "Audio Transcription (Unavailable)",
       category: "OPERATIONS",
       icon: Mic,
       shortcut: "V D",
@@ -97,16 +97,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         onClose();
         setTranscribeModalOpen(true);
       },
-      description: "Microphone speech-to-text recording via gemini-3.5-transcribe and Firestore persistence",
+      description: "Microphone capture, transcription, and voice-log persistence are disabled",
     },
     {
       id: "cmd-dash",
-      title: "Command Center Dashboard",
+      title: "Prototype Dashboard",
       category: "NAVIGATION",
       icon: ShieldAlert,
       shortcut: "G D",
       href: "/dashboard",
-      description: "Jump to primary strategic tactical command view",
+      description: "Open the non-operational demonstration dashboard",
     },
     {
       id: "cmd-map",

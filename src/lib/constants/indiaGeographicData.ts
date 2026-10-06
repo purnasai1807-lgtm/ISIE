@@ -393,111 +393,13 @@ export const MOUNTAIN_PEAKS_AND_PASSES: MountainPeakOrPass[] = [
 ];
 
 // 7. Strategic Dams, Reservoirs & Water Bodies (Revealed at Zoom >= 7.2)
-export const STRATEGIC_WATER_AND_DAMS: WaterBodyOrDam[] = [
-  {
-    id: "DAM-TEHRI",
-    name: "Tehri Dam & Reservoir",
-    type: "DAM",
-    coords: [30.378, 78.480],
-    spec: "Height: 260.5m | Cap: 3,200 MCM | 2,400 MW",
-    riverOrCoast: "Bhagirathi River (Uttarakhand)",
-  },
-  {
-    id: "DAM-BHAKRA",
-    name: "Bhakra Nangal Dam",
-    type: "DAM",
-    coords: [31.410, 76.435],
-    spec: "Height: 226m | Cap: 9,621 MCM | Gobind Sagar",
-    riverOrCoast: "Sutlej River (Himachal / Punjab)",
-  },
-  {
-    id: "DAM-HIRAKUD",
-    name: "Hirakud Dam",
-    type: "DAM",
-    coords: [21.570, 83.870],
-    spec: "Length: 25.8km | Cap: 5,896 MCM | Major Flood Control",
-    riverOrCoast: "Mahanadi River (Odisha)",
-  },
-  {
-    id: "DAM-SARDAR-SAROVAR",
-    name: "Sardar Sarovar Dam",
-    type: "DAM",
-    coords: [21.830, 73.749],
-    spec: "Height: 163m | Cap: 9,500 MCM | Irrigation Matrix",
-    riverOrCoast: "Narmada River (Gujarat)",
-  },
-  {
-    id: "DAM-METTUR",
-    name: "Mettur Stanley Dam",
-    type: "DAM",
-    coords: [11.802, 77.801],
-    spec: "Height: 65m | Cap: 2,640 MCM | Delta Lifeline",
-    riverOrCoast: "Cauvery River (Tamil Nadu)",
-  },
-  {
-    id: "DAM-NAGARJUNA",
-    name: "Nagarjuna Sagar Dam",
-    type: "DAM",
-    coords: [16.574, 79.313],
-    spec: "Masonry: 124m | Cap: 11,560 MCM",
-    riverOrCoast: "Krishna River (Telangana / AP)",
-  },
-  {
-    id: "WATER-CHILIKA",
-    name: "Chilika Tidal Lagoon",
-    type: "LAGOON",
-    coords: [19.70, 85.30],
-    spec: "Area: 1,165 km² | Largest Brackish Lagoon in Asia",
-    riverOrCoast: "Odisha Coastline / Bay of Bengal",
-  },
-  {
-    id: "WATER-PULICAT",
-    name: "Pulicat Barrier Lagoon",
-    type: "LAGOON",
-    coords: [13.60, 80.20],
-    spec: "Area: 759 km² | Second Largest Brackish Lagoon",
-    riverOrCoast: "Coromandel Coast / AP-Tamil Nadu",
-  },
-  {
-    id: "WATER-GULF-KUTCH",
-    name: "Gulf of Kutch",
-    type: "GULF",
-    coords: [22.60, 69.50],
-    spec: "Depth: 60m | Marine National Park & Tidal Buffer",
-    riverOrCoast: "Arabian Sea (Gujarat)",
-  },
-  {
-    id: "WATER-GULF-KHAMBHAT",
-    name: "Gulf of Khambhat",
-    type: "GULF",
-    coords: [21.20, 72.20],
-    spec: "Estuarine Funnel: Narmada, Tapi, Mahi Confluences",
-    riverOrCoast: "Arabian Sea (Gujarat)",
-  },
-];
+export const STRATEGIC_WATER_AND_DAMS: WaterBodyOrDam[] = [];
 
 // 8. Strategic District Centers & Critical Waypoints (Revealed at Zoom >= 7.2)
-export const STRATEGIC_DISTRICT_HUBS: DistrictCenter[] = [
-  { id: "DIST-CHAMOLI", name: "Chamoli / Gopeshwar", district: "Chamoli", state: "Uttarakhand", coords: [30.412, 79.330], role: "High-Altitude GLOF Command Post" },
-  { id: "DIST-JOSHIMATH", name: "Joshimath Cantonment", district: "Chamoli", state: "Uttarakhand", coords: [30.556, 79.563], role: "Sub-surface Subsidence & Glacier Hub" },
-  { id: "DIST-RISHIKESH", name: "Rishikesh Foothills", district: "Dehradun", state: "Uttarakhand", coords: [30.086, 78.267], role: "Evacuation Reception & Staging Depot" },
-  { id: "DIST-PURI", name: "Puri Coastal Center", district: "Puri", state: "Odisha", coords: [19.813, 85.831], role: "Coastal Cyclone Defense Swath" },
-  { id: "DIST-PARADIP", name: "Paradip Deepwater Port", district: "Jagatsinghpur", state: "Odisha", coords: [20.316, 86.611], role: "Maritime Relief Harbor & Petrochemical Hub" },
-  { id: "DIST-TEZPUR", name: "Tezpur Air & River Depot", district: "Sonitpur", state: "Assam", coords: [26.652, 92.792], role: "Brahmaputra Flood Relief Bridgehead" },
-  { id: "DIST-KAZIRANGA", name: "Kaziranga Corridor", district: "Golaghat", state: "Assam", coords: [26.600, 93.590], role: "Wildlife & Highlands Relocation Matrix" },
-  { id: "DIST-SALEM", name: "Salem Strategic Junction", district: "Salem", state: "Tamil Nadu", coords: [11.664, 78.146], role: "Cauvery Basin Logistics & Dispatch" },
-  { id: "DIST-SURAT", name: "Surat Estuary Terminal", district: "Surat", state: "Gujarat", coords: [21.170, 72.831], role: "Tapi Flood Barrier & Industrial Zone" },
-  { id: "DIST-NASHIK", name: "Nashik Upper Godavari", district: "Nashik", state: "Maharashtra", coords: [19.997, 73.789], role: "Western Ghats Spillway Monitoring Node" },
-];
+export const STRATEGIC_DISTRICT_HUBS: DistrictCenter[] = [];
 
 // 9. Tactical Safe Shelters in Indian Sectors
-export const SAFE_SHELTERS = [
-  { id: "SHELTER-RISHIKESH", name: "Rishikesh High-Ground Base", coords: [30.086, 78.267] as [number, number], capacity: "12,500 Beds", radioFreq: "148.650 MHz" },
-  { id: "SHELTER-PARADIP", name: "Paradip Cyclone Haven", coords: [20.316, 86.611] as [number, number], capacity: "24,000 Beds", radioFreq: "156.800 MHz (VHF Ch 16)" },
-  { id: "SHELTER-TEZPUR", name: "Tezpur Flood Relocation Depot", coords: [26.652, 92.792] as [number, number], capacity: "8,000 Beds", radioFreq: "149.200 MHz" },
-  { id: "SHELTER-BHUBANESWAR", name: "Kalinga Multi-Hazard Stadium", coords: [20.301, 85.820] as [number, number], capacity: "18,000 Beds", radioFreq: "152.100 MHz" },
-  { id: "SHELTER-JOSHIMATH", name: "Auli Helipad Refuge Center", coords: [30.531, 79.569] as [number, number], capacity: "3,500 Beds", radioFreq: "146.520 MHz" },
-];
+export const SAFE_SHELTERS: { id: string; name: string; coords: [number, number]; capacity: string; radioFreq: string }[] = [];
 
 // 10. Critical Evacuation Corridors
 export interface EvacuationCorridor {
@@ -511,80 +413,7 @@ export interface EvacuationCorridor {
   bottlenecks?: string[];
 }
 
-export const CRITICAL_EVACUATION_CORRIDORS: EvacuationCorridor[] = [
-  {
-    id: "EVAC-NH58-HELANG",
-    name: "NH-58 Helang-Joshimath Corridor",
-    highwayRef: "NH-58",
-    sector: "Chamoli / Himalayan Belt",
-    status: "SEVERED",
-    points: [
-      [30.556, 79.563],
-      [30.525, 79.510],
-      [30.485, 79.440],
-      [30.412, 79.330],
-    ],
-    clearanceNote: "Severed at km 42 due to slope failure; detour via Helang bypass",
-    bottlenecks: ["Single-lane debris choke at km 42", "Raini bridge approach washed out"],
-  },
-  {
-    id: "EVAC-NH58-RISHIKESH",
-    name: "NH-58 Chamoli-Rishikesh Arterial",
-    highwayRef: "NH-58",
-    sector: "Uttarakhand Lower Sector",
-    status: "OPEN",
-    points: [
-      [30.412, 79.330],
-      [30.285, 78.980],
-      [30.150, 78.550],
-      [30.086, 78.267],
-    ],
-    clearanceNote: "Primary open evacuation corridor toward Rishikesh Base Haven",
-    bottlenecks: ["Heavy traffic load entering Rishikesh staging depot"],
-  },
-  {
-    id: "EVAC-NH16-PURI",
-    name: "NH-16 Puri-Bhubaneswar Coastal Arterial",
-    highwayRef: "NH-16 / NH-316",
-    sector: "Odisha Coastal Zone",
-    status: "OPEN",
-    points: [
-      [19.813, 85.831],
-      [19.950, 85.820],
-      [20.150, 85.815],
-      [20.301, 85.820],
-    ],
-    clearanceNote: "High-capacity dual-carriageway evac corridor toward Kalinga Stadium",
-    bottlenecks: ["Tidal backwater surge monitoring at Pipili flyover"],
-  },
-  {
-    id: "EVAC-NH715-TEZPUR",
-    name: "NH-715 Tezpur-Kaziranga Highway",
-    highwayRef: "NH-715",
-    sector: "Assam Valley",
-    status: "IMPEDED",
-    points: [
-      [26.600, 93.590],
-      [26.620, 93.150],
-      [26.652, 92.792],
-    ],
-    clearanceNote: "Impeded by waterlogging at km 18; restricted to high-clearance trucks",
-    bottlenecks: ["Water 0.35m over road surface near Kaliabor bridgehead"],
-  },
-  {
-    id: "EVAC-NH44-SALEM",
-    name: "NH-44 Mettur-Salem Southern Corridor",
-    highwayRef: "NH-44",
-    sector: "Cauvery Basin",
-    status: "OPEN",
-    points: [
-      [11.796, 77.801],
-      [11.720, 77.950],
-      [11.664, 78.146],
-    ],
-    clearanceNote: "Clear multi-lane evacuation route away from Mettur dam discharge channel",
-  },
-];
+export const CRITICAL_EVACUATION_CORRIDORS: EvacuationCorridor[] = [];
 
 // 11. Road Cutoffs & Critical Infrastructure Chokepoints
 export interface RoadChokepoint {
@@ -596,40 +425,7 @@ export interface RoadChokepoint {
   description: string;
 }
 
-export const ROAD_CUTOFF_CHOKEPOINTS: RoadChokepoint[] = [
-  {
-    id: "CUT-CHAMOLI-KM42",
-    name: "NH-58 Km 42 Landslide Cutoff",
-    highwayRef: "NH-58",
-    status: "SEVERED",
-    coords: [30.485, 79.440],
-    description: "180m slope collapse across carriage-way; road impassable to vehicles",
-  },
-  {
-    id: "CUT-RAINI-BRIDGE",
-    name: "Raini Bridge Washout",
-    highwayRef: "Border Access Road",
-    status: "SEVERED",
-    coords: [30.491, 79.702],
-    description: "Concrete abutment washed out by glacial debris surge",
-  },
-  {
-    id: "CUT-PURI-MARINE",
-    name: "Puri-Konark Marine Drive Inundation",
-    highwayRef: "SH-60",
-    status: "SEVERED",
-    coords: [19.850, 85.950],
-    description: "1.2m storm surge inundation blocking coastal access",
-  },
-  {
-    id: "CUT-TEZPUR-EMBANKMENT",
-    name: "Tezpur Embankment Waterlogging",
-    highwayRef: "NH-715",
-    status: "IMPEDED",
-    coords: [26.635, 93.050],
-    description: "Controlled one-way convoy movement under SDRF escort",
-  },
-];
+export const ROAD_CUTOFF_CHOKEPOINTS: RoadChokepoint[] = [];
 
 // 12. Authoritative Hazard Red-Zones (Polygons)
 export interface AuthoritativeHazardPolygon {
@@ -644,68 +440,8 @@ export interface AuthoritativeHazardPolygon {
   populationExposed: number;
 }
 
-export const AUTHORITATIVE_HAZARD_ZONES: AuthoritativeHazardPolygon[] = [
-  {
-    id: "ZONE-CHAMOLI-GLOF",
-    name: "Chamoli Dhauliganga High Relief Red Zone",
-    classification: "RED_ZONE",
-    hazardType: "GLOF & Flash Surge",
-    center: [30.5541, 79.5663],
-    polygon: [
-      [30.68, 79.75],
-      [30.62, 79.82],
-      [30.45, 79.72],
-      [30.38, 79.48],
-      [30.42, 79.30],
-      [30.58, 79.45],
-    ],
-    description: "Acute glacial outburst flood & mass wasting perimeter in Upper Dhauliganga Gorge",
-    populationExposed: 42500,
-  },
-  {
-    id: "ZONE-CYCLONE-SURGE",
-    name: "Odisha-Andhra Cyclone Varun Surge Swath",
-    classification: "RED_ZONE",
-    hazardType: "Category 4 Storm Surge",
-    center: [19.8135, 85.8312],
-    polygon: [
-      [20.45, 86.80],
-      [20.10, 86.50],
-      [19.60, 85.70],
-      [19.25, 84.95],
-      [19.10, 85.20],
-      [19.55, 86.10],
-      [20.20, 86.95],
-    ],
-    description: "3.8m storm surge inundation perimeter along low-lying coastal mangrove and delta",
-    populationExposed: 230000,
-  },
-  {
-    id: "ZONE-BRAHMAPUTRA-FLOOD",
-    name: "Majuli & Kaziranga Basin Inundation Zone",
-    classification: "WARNING_ZONE",
-    hazardType: "Riverine Flood Embankment Breach",
-    center: [26.6854, 93.3512],
-    polygon: [
-      [26.95, 94.20],
-      [26.85, 94.40],
-      [26.50, 93.70],
-      [26.45, 93.10],
-      [26.70, 92.95],
-      [26.90, 93.60],
-    ],
-    description: "Surcharge buffer where river stage exceeds dangerous embankment breach limits",
-    populationExposed: 118000,
-  },
-];
+export const AUTHORITATIVE_HAZARD_ZONES: AuthoritativeHazardPolygon[] = [];
 
 // 13. Central Command HQ
-export const CENTRAL_COMMAND_HQ = {
-  id: "HQ-DELHI",
-  name: "National Situation Room // ISIE Central Command",
-  coords: [28.6139, 77.2090] as [number, number],
-  callsign: "ISIE-ACTUAL",
-  status: "ACTIVE DEFCON-2 WATCH",
-  organization: "National Disaster Management Authority (NDMA)",
-};
 
+// Operational routes, facilities, shelters, hazard overlays, and command locations remain unavailable until verified sources are integrated.

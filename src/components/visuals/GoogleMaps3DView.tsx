@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import { TacticalBadge } from "../ui/TacticalBadge";
 import { IntelligenceEvent } from "@/lib/types/isie";
-import { DEMO_INCIDENTS } from "@/data/demo/incidents";
 import {
   loadGoogleMaps,
   getGoogleMapsApiKey,
@@ -47,7 +46,7 @@ export const GoogleMaps3DView: React.FC<GoogleMaps3DViewProps> = ({
   incidents,
   onFallbackToThreeGlobe,
 }) => {
-  const activeIncidents = incidents !== undefined ? incidents : DEMO_INCIDENTS;
+  const activeIncidents = incidents ?? [];
   const containerRef = useRef<HTMLDivElement>(null);
   const map3dElementRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
@@ -308,6 +307,9 @@ export const GoogleMaps3DView: React.FC<GoogleMaps3DViewProps> = ({
     <div
       className={`relative w-full h-full min-h-[440px] bg-black overflow-hidden select-none font-mono ${className}`}
     >
+      <div className="absolute bottom-3.5 left-3.5 z-20 rounded-xs border border-amber-400/70 bg-black/90 px-2.5 py-1 font-mono text-[10px] font-bold text-amber-200">
+        MAP DISPLAY ONLY // NO VERIFIED OPERATIONAL DATA
+      </div>
       {/* 1. Underlying Google Maps 3D Custom Element Mount Container */}
       <div ref={containerRef} className="w-full h-full" />
 

@@ -5,6 +5,7 @@ export interface ExportCsvOptions {
   officerRole?: string;
   organization?: string;
   callsign?: string;
+  dataClassification?: string;
 }
 
 /**
@@ -19,7 +20,7 @@ function escapeCsvCell(value: unknown): string {
 }
 
 /**
- * Generates and downloads an operational CSV dataset for an incident event.
+ * Generates and downloads a classified CSV dataset for an incident event.
  * Formatted with standard RFC 4180 headers and cells, compatible with GIS software,
  * Microsoft Excel, Google Sheets, Python/Pandas, and relational databases.
  */
@@ -32,6 +33,7 @@ export function exportIncidentDataCsv(
 
     const headers = [
       "Event Code",
+      "Data Classification",
       "Incident ID",
       "Title",
       "Category",
@@ -77,7 +79,7 @@ export function exportIncidentDataCsv(
 
     const sourceAgenciesJoined = Array.isArray(incident.sourceAgencies) && incident.sourceAgencies.length > 0
       ? incident.sourceAgencies.join("; ")
-      : incident.source || "Official Agency";
+      : incident.source || "UNAVAILABLE";
 
     const evidenceIdsJoined = Array.isArray(incident.evidenceIds) && incident.evidenceIds.length > 0
       ? incident.evidenceIds.join("; ")
@@ -91,6 +93,7 @@ export function exportIncidentDataCsv(
 
     const values = [
       incident.eventCode || incident.id,
+      options?.dataClassification || "UNVERIFIED DATA // NOT FOR OPERATIONAL USE",
       incident.id,
       incident.title,
       incident.category,
@@ -98,15 +101,15 @@ export function exportIncidentDataCsv(
       incident.severity,
       incident.status,
       incident.escalationRisk || "UNSPECIFIED",
-      incident.hazardZoneLevel || "RED_ZONE",
-      incident.carryingCapacityStatus || "CRITICAL",
+      incident.hazardZoneLevel || "UNAVAILABLE",
+      incident.carryingCapacityStatus || "UNAVAILABLE",
       incident.relocationScore !== undefined ? incident.relocationScore : "N/A",
       incident.populationAtRisk,
       incident.affectedAreaKm2 !== undefined ? incident.affectedAreaKm2 : "N/A",
       incident.affectedHabitationsCount !== undefined ? incident.affectedHabitationsCount : "N/A",
       incident.criticalFacilitiesAffected !== undefined ? incident.criticalFacilitiesAffected : "N/A",
-      incident.infrastructureImpact || "Corridors compromised",
-      incident.country || "India",
+      incident.infrastructureImpact || "UNAVAILABLE",
+      incident.country || "UNAVAILABLE",
       incident.state || "N/A",
       incident.district || "N/A",
       incident.locationName,
@@ -116,21 +119,21 @@ export function exportIncidentDataCsv(
       incident.detectionTime || incident.timestamp || "N/A",
       incident.createdAt || "N/A",
       incident.updatedAt || "N/A",
-      incident.createdByName || incident.createdBy || "System Ingestion",
-      incident.source || "Official Telemetry",
+      incident.createdByName || incident.createdBy || "UNAVAILABLE",
+      incident.source || "UNAVAILABLE",
       sourceAgenciesJoined,
-      incident.sourceCount || (Array.isArray(incident.sourceAgencies) ? incident.sourceAgencies.length : 1),
-      incident.confidence || "HIGH",
+      incident.sourceCount ?? (Array.isArray(incident.sourceAgencies) ? incident.sourceAgencies.length : "UNAVAILABLE"),
+      incident.confidence || "UNAVAILABLE",
       incident.confidenceScore !== undefined ? incident.confidenceScore : "N/A",
-      incident.verificationStatus || "VERIFIED",
+      incident.verificationStatus || "UNAVAILABLE",
       incident.summary || "",
       incident.description || incident.additionalNotes || "",
       evidenceIdsJoined,
       auditHistoryJoined,
-      options?.officerName || "Authorized Operator",
-      options?.officerRole || "Command / Decision Maker",
-      options?.callsign || "DIR-OP",
-      options?.organization || "National Disaster Management Authority",
+      options?.officerName || "UNAVAILABLE",
+      options?.officerRole || "UNAVAILABLE",
+      options?.callsign || "UNAVAILABLE",
+      options?.organization || "UNAVAILABLE",
       exportTimeUtc,
     ];
 

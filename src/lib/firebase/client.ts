@@ -113,9 +113,15 @@ export const db: Firestore = firestore;
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: "select_account" });
 
-// Passive connection verification helper to prevent unneeded backend network timeouts on boot
 export async function verifyFirestoreConnection(): Promise<boolean> {
-  return true;
+  if (!auth.currentUser) return false;
+  try {
+    await getDocFromServer(doc(firestore, "users", auth.currentUser.uid));
+    return true;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, `users/${auth.currentUser.uid}`);
+    return false;
+  }
 }
 
 // User Profile persistence model
@@ -166,7 +172,7 @@ export function handleFirestoreError(
 ): void {
   const errMsg = error instanceof Error ? error.message : String(error);
   if (errMsg.includes("Could not reach Cloud Firestore") || errMsg.includes("offline")) {
-    console.warn(`Firestore backend notice: Operating in offline fallback for ${operationType} on ${path || "root"}.`);
+    console.warn(`Firestore request failed while offline for ${operationType} on ${path || "root"}; no fallback data is used.`);
     return;
   }
   const errInfo: FirestoreErrorInfo = {
@@ -194,12 +200,12 @@ export async function syncUserProfile(
     const profile: FirestoreUserProfile = {
       uid: user.uid,
       email: user.email || "",
-      displayName: user.displayName || extraData?.displayName || "Strategic Operator",
+      displayName: user.displayName || extraData?.displayName || "Signed-in user",
       photoURL: user.photoURL || undefined,
-      role: existing.exists() ? existing.data()?.role : (extraData?.role || "OPERATOR"),
-      organization: existing.exists() ? existing.data()?.organization : (extraData?.organization || "National Crisis Command"),
-      clearance: existing.exists() ? existing.data()?.clearance : (extraData?.clearance || "Level 4 Strategic"),
-      callsign: existing.exists() ? existing.data()?.callsign : (extraData?.callsign || "COMMAND-01"),
+      role: existing.exists() ? existing.data()?.role : "VIEWER",
+      organization: existing.exists() ? existing.data()?.organization : (extraData?.organization || "UNSPECIFIED"),
+      clearance: existing.exists() ? existing.data()?.clearance : (extraData?.clearance || "UNASSIGNED"),
+      callsign: existing.exists() ? existing.data()?.callsign : (extraData?.callsign || "UNASSIGNED"),
       createdAt: existing.exists() ? existing.data()?.createdAt : now,
       updatedAt: now,
       lastLoginAt: now,
@@ -215,6 +221,19 @@ export async function syncUserProfile(
     handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}`);
     return null;
   }
+}
+
+export async function getTrustedUserRole(user: FirebaseUser): Promise<"ADMIN" | "OPERATOR" | "ANALYST" | "VIEWER"> {
+  try {
+    const claims = (await user.getIdTokenResult()).claims;
+    const role = claims.role;
+    if (role === "ADMIN" || role === "OPERATOR" || role === "ANALYST") {
+      return role;
+    }
+  } catch (error) {
+    console.warn("Unable to read trusted role claims; using VIEWER permissions.", error);
+  }
+  return "VIEWER";
 }
 
 // Tactical Logs & Transcriptions persistence
